@@ -715,6 +715,7 @@ subroutine destroy_selfenergy_grid(se)
 
      call calculate_exchange(basis,p_matrix_tmp,hexx_val,occupation=occupation_tmp,c_matrix=c_matrix)
 
+    ! calculate alpha_hybrid * k here?
      hxc_val(:,:,:) = hxc_val(:,:,:) + alpha_hybrid * hexx_val(:,:,:)
      hxmxc(:,:,:) = hexx_val(:,:,:) - hxc_val(:,:,:)
 

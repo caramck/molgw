@@ -364,6 +364,8 @@ program molgw
                     c_matrix,en_gks,is_converged)
     endif
 
+    print *, 'TEST CMK'
+
     !
     ! Big RESTART file written if converged
     !
