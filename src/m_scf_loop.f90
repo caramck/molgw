@@ -586,7 +586,7 @@ subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx
   type(basis_set),intent(in) :: basis
   real(dp),intent(in)        :: c_matrix(:,:,:)
   real(dp),intent(in)        :: occupation(:,:)
-  real(dp),intent(in)        :: hamiltonian_exx_alpha(:,:)
+  real(dp),intent(in)        :: hamiltonian_exx_alpha(:,:,:)
   real(dp),intent(inout)     :: hamiltonian_exx_beta(:,:,:)
   real(dp),intent(inout)     :: hamiltonian_xc(:,:,:)
  !=====
