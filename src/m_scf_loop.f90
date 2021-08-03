@@ -184,7 +184,7 @@ subroutine scf_loop(is_restart,&
 
      ! Begin CMK
      ! Catch hamiltonian_exx matrix with ex contribution
-     hamiltonian_exx_alpha(:,:,:) = hamiltonian_exx(:,:,:) + hamiltonian_exx(:,:,:) * alpha_hybrid
+     hamiltonian_exx_alpha(:,:,:) = hamiltonian_exx_alpha(:,:,:) + hamiltonian_exx(:,:,:) * alpha_hybrid
      ! End CMK
    endif
 
