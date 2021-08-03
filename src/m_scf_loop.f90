@@ -68,6 +68,10 @@ subroutine scf_loop(is_restart,&
  real(dp),allocatable    :: hamiltonian_exx(:,:,:)
  real(dp),allocatable    :: hamiltonian_xc(:,:,:)
  real(dp),allocatable    :: matrix_tmp(:,:,:)
+ ! Begin CMK
+ real(dp),allocatable    :: hamiltonian_exx_beta(:,:,:)
+ real(dp),allocatable    :: hamiltonian_exx_alpha(:,:,:)
+ ! End CMK
 !=====
 
 
@@ -87,7 +91,10 @@ subroutine scf_loop(is_restart,&
  call clean_allocate('XC operator Vxc',hamiltonian_xc,basis%nbf,basis%nbf,nspin)
  call clean_allocate('Density matrix P',p_matrix,basis%nbf,basis%nbf,nspin)
  hamiltonian_exx(:,:,:) = 0.0_dp
-
+ ! Begin CMK
+ hamiltonian_exx_alpha(:,:,:) = 0.0_dp
+ hamiltonian_exx_beta(:,:,:) = 0.0_dp
+ ! End CMK
 
  !
  ! Setup the grids for the quadrature of DFT potential/energy
@@ -157,6 +164,12 @@ subroutine scf_loop(is_restart,&
      en_gks%exx_hyb = en_gks%exx_hyb * beta_hybrid
      hamiltonian_xc(:,:,:) = hamiltonian_xc(:,:,:) + hamiltonian_exx(:,:,:) * beta_hybrid
 
+     ! Begin CMK
+     ! Catch hamiltonian_exx matrix with lr erf contribution
+     hamiltonian_exx_beta(:,;,:) = hamiltonian_exx(:,:,:) * beta_hybrid
+     ! End CMK
+
+
    endif
 
    !
@@ -168,6 +181,11 @@ subroutine scf_loop(is_restart,&
      ! Rescale with alpha_hybrid for hybrid functionals
      en_gks%exx_hyb = en_gks%exx_hyb + alpha_hybrid * en_gks%exx
      hamiltonian_xc(:,:,:) = hamiltonian_xc(:,:,:) + hamiltonian_exx(:,:,:) * alpha_hybrid
+
+     ! Begin CMK
+     ! Catch hamiltonian_exx matrix with ex contribution
+     hamiltonian_exx_alpha(:,;,:) = hamiltonian_exx(:,:,:) * alpha_hybrid
+     ! End CMK
    endif
 
 
@@ -339,6 +357,12 @@ subroutine scf_loop(is_restart,&
  if( print_hartree_ ) then
    call print_hartee_expectation(basis,p_matrix,c_matrix,occupation,hamiltonian_hartree,hamiltonian_exx)
    call print_expectations(basis,c_matrix,hamiltonian_kinetic)
+
+   ! Begin CMK
+   ! Print the expectation values for each component involving exchange (alphaK, betaK, vxc)
+   call print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx_alpha,hamiltonian_exx_beta,hamiltonian_xc)
+   ! End CMK
+
  endif
 
  if( print_density_matrix_ .AND. is_iomaster ) then
@@ -552,6 +576,72 @@ subroutine print_expectations(basis,c_matrix,hkin)
 
 
 end subroutine print_expectations
+
+!Begin CMK
+!=========================================================================
+subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx_alpha,hamiltonian_exx_beta,hamiltonian_xc)
+! Print out the alpha exchange, beta exchange, and vxc expectation values for each state
+  implicit none
+
+  type(basis_set),intent(in) :: basis
+  real(dp),intent(in)        :: c_matrix(:,:,:)
+  real(dp),intent(in)        :: occupation(:,:)
+  real(dp),intent(in)        :: hamiltonian_exx_alpha(:,:)
+  real(dp),intent(inout)     :: hamiltonian_exx_beta(:,:,:)
+  real(dp),intent(inout)     :: hamiltonian_xc(:,:,:)
+ !=====
+  integer                 :: restart_type
+  integer                 :: nstate,nocc,istate,ispin
+  real(dp),allocatable    :: c_matrix_restart(:,:,:)
+  real(dp),allocatable    :: h_ii(:,:)
+  real(dp),allocatable    :: energy_restart(:,:),occupation_restart(:,:)
+ !=====
+
+  nstate = SIZE(c_matrix,DIM=2)
+  nocc   = get_number_occupied_states(occupation)
+
+  !Read RESTART
+  call clean_allocate('RESTART: C',c_matrix_restart,basis%nbf,nstate,nspin)
+  allocate(energy_restart(nstate,nspin))
+  allocate(occupation_restart(nstate,nspin))
+  allocate(h_ii(nstate,nspin))
+ 
+  call read_restart(restart_type,'RESTART_TEST',basis,occupation_restart,c_matrix_restart,energy_restart)
+ 
+  !If no RESTART file
+  if( restart_type == NO_RESTART ) then
+    c_matrix_restart(:,:,:) = c_matrix(:,:,:)
+  else
+    write(stdout,'(1x,a,a)') 'RESTART file read: ','RESTART_TEST'
+  endif
+ 
+  ! Contract each matrix in AO basis to MO and diagonalize
+  call matrix_ao_to_mo_diag(c_matrix_restart,hamiltonian_exx_alpha,h_ii)
+  ! Print out each expectation value to output file
+  call dump_out_energy('=== Alpha component of exchange expectation value ===',occupation,h_ii)
+  ! File each expectation value to the yaml
+  call dump_out_energy_yaml('alpha component of exchange expectation value',h_ii,1,nstate)
+
+
+  ! Repeat contraction and print for hamiltonian_exx_beta matrix
+  call matrix_ao_to_mo_diag(c_matrix_restart,hamiltonian_exx_beta,h_ii)
+  call dump_out_energy('=== Beta component of exchange expectation value ===',occupation,h_ii)
+  call dump_out_energy_yaml('beta component of exchange expectation value',h_ii,1,nstate)
+
+  ! Repeat contraction and print for hamiltonian_xc matrix
+  call matrix_ao_to_mo_diag(c_matrix_restart,hamiltonian_xc,h_ii)
+  call dump_out_energy('=== XC potential expectation value ===',occupation,h_ii)
+  call dump_out_energy_yaml('XC potential expectation value',h_ii,1,nstate)
+
+
+  ! deallocate non-output matrices
+  deallocate(h_ii)
+  deallocate(energy_restart,occupation_restart)
+  call clean_deallocate('RESTART: C',c_matrix_restart)
+
+ end subroutine print_exchange_expectations
+
+! End CMK
 
 
 !=========================================================================
