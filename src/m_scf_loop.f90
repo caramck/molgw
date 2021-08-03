@@ -355,8 +355,8 @@ subroutine scf_loop(is_restart,&
 
 
  if( print_hartree_ ) then
-   call print_hartee_expectation(basis,p_matrix,c_matrix,occupation,hamiltonian_hartree,hamiltonian_exx)
-   call print_expectations(basis,c_matrix,hamiltonian_kinetic)
+   ! call print_hartee_expectation(basis,p_matrix,c_matrix,occupation,hamiltonian_hartree,hamiltonian_exx)
+   ! call print_expectations(basis,c_matrix,hamiltonian_kinetic)
 
    ! Begin CMK
    ! Print the expectation values for each component involving exchange (alphaK, betaK, vxc)
