@@ -360,7 +360,7 @@ subroutine scf_loop(is_restart,&
 
  if( print_hartree_ ) then
    call print_hartee_expectation(basis,p_matrix,c_matrix,occupation,hamiltonian_hartree,hamiltonian_exx)
-   ! call print_expectations(basis,c_matrix,hamiltonian_kinetic)
+   call print_expectations(basis,c_matrix,hamiltonian_kinetic)
 
    ! Begin CMK
    ! Print the expectation values for each component involving exchange (alphaK, betaK, vxc)
@@ -630,14 +630,14 @@ subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx
 
 
   ! Repeat contraction and print for hamiltonian_exx_beta matrix
-  !call matrix_ao_to_mo_diag(c_matrix_restart,hamiltonian_exx_beta,h_ii)
-  !call dump_out_energy('=== Beta component of exchange expectation value ===',occupation,h_ii)
-  !call dump_out_energy_yaml('beta component of exchange expectation value',h_ii,1,nstate)
+  call matrix_ao_to_mo_diag(c_matrix_restart,hamiltonian_exx_beta,h_ii)
+  call dump_out_energy('=== Beta component of exchange expectation value ===',occupation,h_ii)
+  call dump_out_energy_yaml('beta component of exchange expectation value',h_ii,1,nstate)
 
   ! Repeat contraction and print for hamiltonian_xc matrix
-  !call matrix_ao_to_mo_diag(c_matrix_restart,hamiltonian_xc,h_ii)
-  !call dump_out_energy('=== XC potential expectation value ===',occupation,h_ii)
-  !call dump_out_energy_yaml('XC potential expectation value',h_ii,1,nstate)
+  call matrix_ao_to_mo_diag(c_matrix_restart,hamiltonian_xc,h_ii)
+  call dump_out_energy('=== XC potential expectation value ===',occupation,h_ii)
+  call dump_out_energy_yaml('XC potential expectation value',h_ii,1,nstate)
 
 
   ! deallocate non-output matrices
