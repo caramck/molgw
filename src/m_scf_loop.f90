@@ -90,6 +90,10 @@ subroutine scf_loop(is_restart,&
  call clean_allocate('Exchange operator Sigx',hamiltonian_exx,basis%nbf,basis%nbf,nspin)
  call clean_allocate('XC operator Vxc',hamiltonian_xc,basis%nbf,basis%nbf,nspin)
  call clean_allocate('Density matrix P',p_matrix,basis%nbf,basis%nbf,nspin)
+ !Begin CMK
+ call clean_allocate('Alpha component exchange K',hamiltonian_exx_alpha,basis%nbf,basis%nbf,nspin)
+ call clean_allocate('Beta component exchange K',hamiltonian_exx_beta,basis%nbf,basis%nbf,nspin)
+ !End CMK
  hamiltonian_exx(:,:,:) = 0.0_dp
  ! Begin CMK
  hamiltonian_exx_alpha(:,:,:) = 0.0_dp
