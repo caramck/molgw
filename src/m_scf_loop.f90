@@ -156,6 +156,9 @@ subroutine scf_loop(is_restart,&
    ! hamiltonian_xc is used as a temporary matrix
    if( calc_type%is_dft ) then
      call dft_exc_vxc_batch(BATCH_SIZE,basis,occupation,c_matrix,hamiltonian_xc,en_gks%xc)
+     !!!!!!debug
+     print *, "en_gks%xc", en_gks%xc
+     !!!!!!
    endif
 
    !
@@ -167,6 +170,10 @@ subroutine scf_loop(is_restart,&
      ! Rescale with beta_hybrid for range-separated hybrid functionals
      en_gks%exx_hyb = en_gks%exx_hyb * beta_hybrid
      hamiltonian_xc(:,:,:) = hamiltonian_xc(:,:,:) + hamiltonian_exx(:,:,:) * beta_hybrid
+
+     !!!!!!debug
+     print *, "en_gks%exx_hyb in lr", en_gks%exx_hyb
+     !!!!!!
 
      ! Begin CMK
      ! Catch hamiltonian_exx matrix with lr erf contribution
@@ -186,6 +193,9 @@ subroutine scf_loop(is_restart,&
      en_gks%exx_hyb = en_gks%exx_hyb + alpha_hybrid * en_gks%exx
      hamiltonian_xc(:,:,:) = hamiltonian_xc(:,:,:) + hamiltonian_exx(:,:,:) * alpha_hybrid
 
+     !!!!!!debug
+     print *, "en_gks%exx_hyb in ex not lr", en_gks%exx_hyb
+     !!!!!!
      ! Begin CMK
      ! Catch hamiltonian_exx matrix with ex contribution
      hamiltonian_exx_alpha(:,:,:) = hamiltonian_exx_alpha(:,:,:) + hamiltonian_exx(:,:,:) * alpha_hybrid
