@@ -622,7 +622,7 @@ subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx
   endif
 
   ! Contract each matrix in AO basis to MO and diagonalize
-  call matrix_ao_to_mo_diag(c_matrix_restart,hamiltonian_exx_alpha,h_ii)
+  call matrix_ao_to_mo_diag(c_matrix_restart,RESHAPE(hamiltonian_exx_alpha,(/basis%nbf,basis%nbf,1/)),h_ii)
   ! Print out each expectation value to output file
   call dump_out_energy('=== Alpha component of exchange expectation value ===',occupation,h_ii)
   ! File each expectation value to the yaml
@@ -630,12 +630,12 @@ subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx
 
 
   ! Repeat contraction and print for hamiltonian_exx_beta matrix
-  call matrix_ao_to_mo_diag(c_matrix_restart,hamiltonian_exx_beta,h_ii)
+  call matrix_ao_to_mo_diag(c_matrix_restart,RESHAPE(hamiltonian_exx_beta,(/basis%nbf,basis%nbf,1/)),h_ii)
   call dump_out_energy('=== Beta component of exchange expectation value ===',occupation,h_ii)
   call dump_out_energy_yaml('beta component of exchange expectation value',h_ii,1,nstate)
 
   ! Repeat contraction and print for hamiltonian_xc matrix
-  call matrix_ao_to_mo_diag(c_matrix_restart,hamiltonian_xc,h_ii)
+  call matrix_ao_to_mo_diag(c_matrix_restart,RESHAPE(hamiltonian_xc,(/basis%nbf,basis%nbf,1/)),h_ii)
   call dump_out_energy('=== XC potential expectation value ===',occupation,h_ii)
   call dump_out_energy_yaml('XC potential expectation value',h_ii,1,nstate)
 
