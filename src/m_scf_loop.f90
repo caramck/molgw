@@ -144,6 +144,7 @@ subroutine scf_loop(is_restart,&
      hamiltonian(:,:,ispin) = hamiltonian(:,:,ispin) + hamiltonian_hartree(:,:)
     
      !!!debug
+     integer row, col
      print *, "shape of ham hartree 1st = ",shape(hamiltonian_hartree)
      print *, "size of ham hartree 1st = ",size(hamiltonian_hartree)
      print *, "contents of ham hartree 1st = "
@@ -503,6 +504,7 @@ subroutine print_hartee_expectation(basis,p_matrix,c_matrix,occupation,hamiltoni
  endif
 
  !!!debug
+ integer row, col
  print *, "shape of ham hartree in routine = ",shape(hamiltonian_hartree)
  print *, "size of ham hartree in routine = ",size(hamiltonian_hartree)
  print *, "contents of ham hartree in routine = "
@@ -517,11 +519,12 @@ subroutine print_hartee_expectation(basis,p_matrix,c_matrix,occupation,hamiltoni
  write(stdout,'(1x,a,2(3x,f12.6))') 'Hartree  HOMO expectation (eV):',h_ii(nocc,:) * Ha_eV
 
  !!!debug
- print *, "shape of hii in routine = ",shape(hii)
- print *, "size of hii in routine = ",size(hii)
+ integer row, col
+ print *, "shape of hii in routine = ",shape(h_ii)
+ print *, "size of hii in routine = ",size(h_ii)
  print *, "contents of hii in routine = "
  do row=1, 5
-  write (*,*) (hii(row,col), col=1,5)
+  write (*,*) (h_ii(row,col), col=1,5)
  enddo
  !!!
 
