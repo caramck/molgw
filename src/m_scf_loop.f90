@@ -144,7 +144,6 @@ subroutine scf_loop(is_restart,&
      hamiltonian(:,:,ispin) = hamiltonian(:,:,ispin) + hamiltonian_hartree(:,:)
     
      !!!debug
-     integer row, col
      print *, "shape of ham hartree 1st = ",shape(hamiltonian_hartree)
      print *, "size of ham hartree 1st = ",size(hamiltonian_hartree)
      print *, "contents of h_ii =",hamiltonian_hartree(:,:)
@@ -501,7 +500,6 @@ subroutine print_hartee_expectation(basis,p_matrix,c_matrix,occupation,hamiltoni
  endif
 
  !!!debug
- integer row, col
  print *, "shape of ham hartree in routine = ",shape(hamiltonian_hartree)
  print *, "size of ham hartree in routine = ",size(hamiltonian_hartree)
  print *, "contents of ham hartree in routine = ",hamiltonian_hartree(:,:)
