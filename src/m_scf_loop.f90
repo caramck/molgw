@@ -142,6 +142,16 @@ subroutine scf_loop(is_restart,&
    endif
    do ispin=1,nspin
      hamiltonian(:,:,ispin) = hamiltonian(:,:,ispin) + hamiltonian_hartree(:,:)
+    
+     !!!debug
+     print *, "shape of ham hartree 1st = ",shape(hamiltonian_hartree)
+     print *, "size of ham hartree 1st = ",size(hamiltonian_hartree)
+     print *, "contents of ham hartree 1st = "
+     do row=1, 5
+      write (*,*) (hamiltonian_hartree(row,col), col=1,5)
+     enddo
+     !!!
+
    enddo
 
 
@@ -156,9 +166,6 @@ subroutine scf_loop(is_restart,&
    ! hamiltonian_xc is used as a temporary matrix
    if( calc_type%is_dft ) then
      call dft_exc_vxc_batch(BATCH_SIZE,basis,occupation,c_matrix,hamiltonian_xc,en_gks%xc)
-     !!!!!!debug
-     print *, "en_gks%xc", en_gks%xc
-     !!!!!!
    endif
 
    !
@@ -170,10 +177,6 @@ subroutine scf_loop(is_restart,&
      ! Rescale with beta_hybrid for range-separated hybrid functionals
      en_gks%exx_hyb = en_gks%exx_hyb * beta_hybrid
      hamiltonian_xc(:,:,:) = hamiltonian_xc(:,:,:) + hamiltonian_exx(:,:,:) * beta_hybrid
-
-     !!!!!!debug
-     print *, "en_gks%exx_hyb in lr", en_gks%exx_hyb
-     !!!!!!
 
      ! Begin CMK
      ! Catch hamiltonian_exx matrix with lr erf contribution
@@ -193,9 +196,6 @@ subroutine scf_loop(is_restart,&
      en_gks%exx_hyb = en_gks%exx_hyb + alpha_hybrid * en_gks%exx
      hamiltonian_xc(:,:,:) = hamiltonian_xc(:,:,:) + hamiltonian_exx(:,:,:) * alpha_hybrid
 
-     !!!!!!debug
-     print *, "en_gks%exx_hyb in ex not lr", en_gks%exx_hyb
-     !!!!!!
      ! Begin CMK
      ! Catch hamiltonian_exx matrix with ex contribution
      hamiltonian_exx_alpha(:,:,:) = hamiltonian_exx_alpha(:,:,:) + hamiltonian_exx(:,:,:) * alpha_hybrid
@@ -502,10 +502,28 @@ subroutine print_hartee_expectation(basis,p_matrix,c_matrix,occupation,hamiltoni
    write(stdout,'(1x,a,a)') 'RESTART file read: ','RESTART_TEST'
  endif
 
+ !!!debug
+ print *, "shape of ham hartree in routine = ",shape(hamiltonian_hartree)
+ print *, "size of ham hartree in routine = ",size(hamiltonian_hartree)
+ print *, "contents of ham hartree in routine = "
+ do row=1, 5
+  write (*,*) (hamiltonian_hartree(row,col), col=1,5)
+ enddo
+ !!!
+
  call matrix_ao_to_mo_diag(c_matrix_restart,RESHAPE(hamiltonian_hartree,(/basis%nbf,basis%nbf,1/)),h_ii)
  call dump_out_energy('=== Hartree expectation value ===',occupation,h_ii)
  call dump_out_energy_yaml('hartree expectation value',h_ii,1,nstate)
  write(stdout,'(1x,a,2(3x,f12.6))') 'Hartree  HOMO expectation (eV):',h_ii(nocc,:) * Ha_eV
+
+ !!!debug
+ print *, "shape of hii in routine = ",shape(hii)
+ print *, "size of hii in routine = ",size(hii)
+ print *, "contents of hii in routine = "
+ do row=1, 5
+  write (*,*) (hii(row,col), col=1,5)
+ enddo
+ !!!
 
 
  call matrix_ao_to_mo_diag(c_matrix_restart,hamiltonian_exx,h_ii)
