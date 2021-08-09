@@ -143,11 +143,7 @@ subroutine scf_loop(is_restart,&
    do ispin=1,nspin
      hamiltonian(:,:,ispin) = hamiltonian(:,:,ispin) + hamiltonian_hartree(:,:)
     
-     !!!debug
-     print *, "shape of ham hartree 1st = ",shape(hamiltonian_hartree)
-     print *, "size of ham hartree 1st = ",size(hamiltonian_hartree)
-     print *, "contents of ham hartree 1st =",hamiltonian_hartree(:,:)
-     !!!
+
 
    enddo
 
@@ -164,6 +160,12 @@ subroutine scf_loop(is_restart,&
    if( calc_type%is_dft ) then
      call dft_exc_vxc_batch(BATCH_SIZE,basis,occupation,c_matrix,hamiltonian_xc,en_gks%xc)
    endif
+
+   !!!debug
+   print *, "shape of ham vxc 1st = ",shape(hamiltonian_xc)
+   print *, "size of ham vxc 1st = ",size(hamiltonian_xc)
+   print *, "contents of ham vxc 1st =",hamiltonian_xc(:,:)
+   !!!
 
    !
    ! LR Exchange contribution to the Hamiltonian
@@ -499,22 +501,14 @@ subroutine print_hartee_expectation(basis,p_matrix,c_matrix,occupation,hamiltoni
    write(stdout,'(1x,a,a)') 'RESTART file read: ','RESTART_TEST'
  endif
 
- !!!debug
- print *, "shape of ham hartree in routine = ",shape(hamiltonian_hartree)
- print *, "size of ham hartree in routine = ",size(hamiltonian_hartree)
- print *, "contents of ham hartree in routine = ",hamiltonian_hartree(:,:)
- !!!
+
 
  call matrix_ao_to_mo_diag(c_matrix_restart,RESHAPE(hamiltonian_hartree,(/basis%nbf,basis%nbf,1/)),h_ii)
  call dump_out_energy('=== Hartree expectation value ===',occupation,h_ii)
  call dump_out_energy_yaml('hartree expectation value',h_ii,1,nstate)
  write(stdout,'(1x,a,2(3x,f12.6))') 'Hartree  HOMO expectation (eV):',h_ii(nocc,:) * Ha_eV
 
- !!!debug
- print *, "shape of hii in routine = ",shape(h_ii)
- print *, "size of hii in routine = ",size(h_ii)
- print *, "contents of h_ii =",h_ii(:,:)
- !!!
+
 
 
  call matrix_ao_to_mo_diag(c_matrix_restart,hamiltonian_exx,h_ii)
@@ -648,16 +642,30 @@ subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx
   call dump_out_energy_yaml('alpha component of exchange expectation value',h_ii,1,nstate)
 
 
+
   ! Repeat contraction and print for hamiltonian_exx_beta matrix
   call matrix_ao_to_mo_diag(c_matrix_restart,RESHAPE(hamiltonian_exx_beta,(/basis%nbf,basis%nbf,1/)),h_ii)
   call dump_out_energy('=== Beta component of exchange expectation value ===',occupation,h_ii)
   call dump_out_energy_yaml('beta component of exchange expectation value',h_ii,1,nstate)
+
+
+  !!!debug
+ print *, "shape of ham vxc in routine = ",shape(hamiltonian_xc)
+ print *, "size of ham vxc in routine = ",size(hamiltonian_xc)
+ print *, "contents of ham vxc in routine = ",hamiltonian_xc(:,:)
+ !!!
 
   ! Repeat contraction and print for hamiltonian_xc matrix
   call matrix_ao_to_mo_diag(c_matrix_restart,RESHAPE(hamiltonian_xc,(/basis%nbf,basis%nbf,1/)),h_ii)
   call dump_out_energy('=== XC potential expectation value ===',occupation,h_ii)
   call dump_out_energy_yaml('XC potential expectation value',h_ii,1,nstate)
 
+
+ !!!debug
+  print *, "shape of ham vxc hii in routine = ",shape(h_ii)
+  print *, "size of ham vxcin hii routine = ",size(h_ii)
+  print *, "contents of ham vxc hii in routine =",h_ii(:,:)
+  !!!
 
   ! deallocate non-output matrices
   deallocate(h_ii)
