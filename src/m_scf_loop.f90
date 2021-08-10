@@ -222,7 +222,11 @@ subroutine scf_loop(is_restart,&
      hamiltonian_exx_alpha(:,:,:) = hamiltonian_exx_alpha(:,:,:) + hamiltonian_exx(:,:,:) * alpha_hybrid
      ! End CMK
    endif
-
+   !!!debug
+   print *, "shape of ham vxc in this spot 2= ",shape(hamiltonian_vxc)
+   print *, "size of ham vxc in this spot 2= ",size(hamiltonian_vxc)
+   print *, "contents of ham vxc in this spot 2=",hamiltonian_vxc(:,:,:)
+   !!!
 
    !
    ! QSGW or COHSEX self energy
@@ -284,6 +288,12 @@ subroutine scf_loop(is_restart,&
    ! Add the XC part of the hamiltonian to the total hamiltonian
    hamiltonian(:,:,:) = hamiltonian(:,:,:) + hamiltonian_xc(:,:,:)
 
+
+   !!!debug
+   print *, "shape of ham vxc in this spot = ",shape(hamiltonian_vxc)
+   print *, "size of ham vxc in this spot= ",size(hamiltonian_vxc)
+   print *, "contents of ham vxc in this spot =",hamiltonian_vxc(:,:,:)
+   !!!
 
    ! All the components of the energy have been calculated at this stage
    ! Sum up to get the total energy
