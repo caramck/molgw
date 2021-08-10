@@ -171,7 +171,7 @@ subroutine scf_loop(is_restart,&
    print *, "contents of ham xc in right after catch  =",hamiltonian_xc(:,:,:)
    print *, "en_gks%xc after catch=",en_gks%xc
    !!!
-   hamiltonian_vxc(:,:,:) = hamiltonian_vxc(:,:,:) + hamiltonian_xc(:,:,:)
+   hamiltonian_vxc(:,:,:) = hamiltonian_xc(:,:,:)
 
    !
    ! LR Exchange contribution to the Hamiltonian
