@@ -100,7 +100,7 @@ subroutine scf_loop(is_restart,&
  ! Begin CMK
  hamiltonian_exx_alpha(:,:,:) = 0.0_dp
  hamiltonian_exx_beta(:,:,:) = 0.0_dp
- hamiltonian_vxc(:,:,: = 0.0_dp)
+ hamiltonian_vxc(:,:,:) = 0.0_dp
  ! End CMK
 
  !
@@ -380,6 +380,13 @@ subroutine scf_loop(is_restart,&
 
    ! Begin CMK
    ! Print the expectation values for each component involving exchange (alphaK, betaK, vxc)
+
+   !!!debug
+   print *, "shape of ham vxc in print hartree loop = ",shape(hamiltonian_vxc)
+   print *, "size of ham vxc in print hartree loop= ",size(hamiltonian_vxc)
+   print *, "contents of ham vxc in print hartree loop =",hamiltonian_vxc(:,:,:)
+   !!!
+
    call print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx_alpha,hamiltonian_exx_beta,hamiltonian_vxc)
    ! End CMK
 
@@ -657,8 +664,8 @@ subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx
 
 
   !!!debug
- print *, "shape of ham vxc in routine = ",shape(hamiltonian_vxc)
- print *, "size of ham vxc in routine = ",size(hamiltonian_vxc)
+ print *, "shape of ham vxc in routine = ",shape(hamiltonian_vxc(:,:,:))
+ print *, "size of ham vxc in routine = ",size(hamiltonian_vxc(:,:,:))
  print *, "contents of ham vxc in routine = ",hamiltonian_vxc(:,:,:)
  !!!
 
