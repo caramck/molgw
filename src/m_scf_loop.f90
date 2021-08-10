@@ -314,7 +314,11 @@ subroutine scf_loop(is_restart,&
    ! DIIS or simple mixing on the hamiltonian
    call hamiltonian_prediction(s_matrix,x_matrix,p_matrix,hamiltonian,en_gks%total)
 
-
+   !!!debug
+   print *, "shape of ham vxc in this spot 3= ",shape(hamiltonian_vxc)
+   print *, "size of ham vxc in this spot 3= ",size(hamiltonian_vxc)
+   print *, "contents of ham vxc in this spot 3=",hamiltonian_vxc(:,:,:)
+   !!!
    !
    ! Diagonalize the Hamiltonian H
    ! Generalized eigenvalue problem with overlap matrix S
@@ -335,7 +339,11 @@ subroutine scf_loop(is_restart,&
 
    call output_homolumo('gKS',occupation,energy,1,nstate)
 
-
+   !!!debug
+   print *, "shape of ham vxc in this spot 4 = ",shape(hamiltonian_vxc)
+   print *, "size of ham vxc in this spot 4= ",size(hamiltonian_vxc)
+   print *, "contents of ham vxc in this spot 4=",hamiltonian_vxc(:,:,:)
+   !!!
    !
    ! Output the total energy and its components
    write(stdout,*)
@@ -386,6 +394,11 @@ subroutine scf_loop(is_restart,&
  ! end of the big SCF loop
  enddo
 
+ !!!debug
+ print *, "shape of ham vxc in this spot 5= ",shape(hamiltonian_vxc)
+ print *, "size of ham vxc in this spot 5= ",size(hamiltonian_vxc)
+ print *, "contents of ham vxc in this spot 5=",hamiltonian_vxc(:,:,:)
+ !!!
 
  write(stdout,'(/,1x,a)') '=================================================='
  write(stdout,'(1x,a)') 'The SCF loop ends here'
