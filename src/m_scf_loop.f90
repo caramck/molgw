@@ -72,6 +72,7 @@ subroutine scf_loop(is_restart,&
  real(dp),allocatable    :: hamiltonian_exx_beta(:,:,:)
  real(dp),allocatable    :: hamiltonian_exx_alpha(:,:,:)
  real(dp),allocatable    :: hamiltonian_vxc(:,:,:)
+ real(dp),allocatable    :: ham_debug(:,:,:)
  ! End CMK
 !=====
 
@@ -166,7 +167,7 @@ subroutine scf_loop(is_restart,&
 
      !!!debug
      print *,"en_gks%xc",en_gks%xc
-     call print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx_alpha,hamiltonian_exx_beta,hamiltonian_vxc)
+     print *,"contents of hamiltonian vxc matrix=",hamiltonian_vxc(:,:,:)
      ! End CMK     
    endif
 
@@ -265,6 +266,13 @@ subroutine scf_loop(is_restart,&
    !
    ! Add the XC part of the hamiltonian to the total hamiltonian
    hamiltonian(:,:,:) = hamiltonian(:,:,:) + hamiltonian_xc(:,:,:)
+
+   !!!debug
+   !pull out all other contributions to the Hamiltonian
+   ham_debug(:,:,:) = 0.0_dp
+   ham_debug(:,:,:) = hamiltonian(:,:,:) - (hamiltonian_exx(:,:,:) * beta_hybrid) - (hamiltonian_exx(:,:,:) * alpha_hybrid) - hamiltonian_hartree(:,:,:) - hamiltonian_kinetic(:,:,:) - hamiltonian_nucleus(:,:,:) 
+   print *,"ham_debug",ham_debug(:,:,:)
+   !!!
 
    ! All the components of the energy have been calculated at this stage
    ! Sum up to get the total energy
@@ -407,6 +415,11 @@ subroutine scf_loop(is_restart,&
  call clean_deallocate('Hartree potential Vh',hamiltonian_hartree)
  call clean_deallocate('Exchange operator Sigx',hamiltonian_exx)
  call clean_deallocate('XC operator Vxc',hamiltonian_xc)
+ !Begin CMK
+ call clean_deallocate('XC operator Vxc',hamiltonian_vxc)
+ call clean_deallocate('Alpha exchange hexx_alpha',hamiltonian_exx_alpha)
+ call clean_deallocate('Beta exchange hexx_beta',hamiltonian_exx_beta)
+ !End CMK
 
 
  write(stdout,'(/,/,a25,1x,f19.10,/)') 'SCF Total Energy (Ha):',en_gks%total
