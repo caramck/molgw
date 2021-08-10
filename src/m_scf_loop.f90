@@ -199,6 +199,11 @@ subroutine scf_loop(is_restart,&
      hamiltonian_exx_beta(:,:,:) = hamiltonian_exx_beta(:,:,:) + hamiltonian_exx(:,:,:) * beta_hybrid
      ! End CMK
 
+   !!!debug
+   print *, "shape of ham vxc after ref to xc = ",shape(hamiltonian_vxc)
+   print *, "size of ham vxc after ref to xc = ",size(hamiltonian_vxc)
+   print *, "contents of ham vxc after ref to xc =",hamiltonian_vxc(:,:,:)
+   !!!
 
    endif
 
@@ -628,8 +633,8 @@ subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx
   real(dp),intent(in)        :: c_matrix(:,:,:)
   real(dp),intent(in)        :: occupation(:,:)
   real(dp),intent(in)        :: hamiltonian_exx_alpha(:,:,:)
-  real(dp),intent(inout)     :: hamiltonian_exx_beta(:,:,:)
-  real(dp),intent(inout)     :: hamiltonian_vxc(:,:,:)
+  real(dp),intent(in)        :: hamiltonian_exx_beta(:,:,:)
+  real(dp),intent(in)        :: hamiltonian_vxc(:,:,:)
  !=====
   integer                 :: restart_type
   integer                 :: nstate,nocc,istate,ispin
