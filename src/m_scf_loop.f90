@@ -146,8 +146,6 @@ subroutine scf_loop(is_restart,&
    do ispin=1,nspin
      hamiltonian(:,:,ispin) = hamiltonian(:,:,ispin) + hamiltonian_hartree(:,:)
     
-
-
    enddo
 
 
@@ -162,10 +160,16 @@ subroutine scf_loop(is_restart,&
    ! hamiltonian_xc is used as a temporary matrix
    if( calc_type%is_dft ) then
      call dft_exc_vxc_batch(BATCH_SIZE,basis,occupation,c_matrix,hamiltonian_xc,en_gks%xc)
+     ! Begin CMK
+     ! Catch hamiltonian_xc matrix before modification
+     hamiltonian_vxc(:,:,:) = hamiltonian_xc(:,:,:)
+
+     !!!debug
+     print *,"en_gks%xc",en_gks%xc
+
+     ! End CMK     
    endif
-   ! Begin CMK
-   ! Catch hamiltonian_xc matrix before modification
-   hamiltonian_vxc(:,:,:) = hamiltonian_xc(:,:,:)
+
 
    !
    ! LR Exchange contribution to the Hamiltonian
@@ -364,8 +368,8 @@ subroutine scf_loop(is_restart,&
 
 
  if( print_hartree_ ) then
-   call print_hartee_expectation(basis,p_matrix,c_matrix,occupation,hamiltonian_hartree,hamiltonian_exx)
-   call print_expectations(basis,c_matrix,hamiltonian_kinetic)
+   !call print_hartee_expectation(basis,p_matrix,c_matrix,occupation,hamiltonian_hartree,hamiltonian_exx)
+   !call print_expectations(basis,c_matrix,hamiltonian_kinetic)
 
    ! Begin CMK
    ! Print the expectation values for each component involving exchange (alphaK, betaK, vxc)
@@ -496,8 +500,6 @@ subroutine print_hartee_expectation(basis,p_matrix,c_matrix,occupation,hamiltoni
  else
    write(stdout,'(1x,a,a)') 'RESTART file read: ','RESTART_TEST'
  endif
-
-
 
  call matrix_ao_to_mo_diag(c_matrix_restart,RESHAPE(hamiltonian_hartree,(/basis%nbf,basis%nbf,1/)),h_ii)
  call dump_out_energy('=== Hartree expectation value ===',occupation,h_ii)
@@ -631,17 +633,17 @@ subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx
   endif
 
   ! Contract each matrix in AO basis to MO and diagonalize
-  call matrix_ao_to_mo_diag(c_matrix_restart,RESHAPE(hamiltonian_exx_alpha,(/basis%nbf,basis%nbf,1/)),h_ii)
+  !call matrix_ao_to_mo_diag(c_matrix_restart,RESHAPE(hamiltonian_exx_alpha,(/basis%nbf,basis%nbf,1/)),h_ii)
   ! Print out each expectation value to output file
-  call dump_out_energy('=== Alpha component of exchange expectation value ===',occupation,h_ii)
+  !call dump_out_energy('=== Alpha component of exchange expectation value ===',occupation,h_ii)
   ! File each expectation value to the yaml
-  call dump_out_energy_yaml('alpha component of exchange expectation value',h_ii,1,nstate)
+  !call dump_out_energy_yaml('alpha component of exchange expectation value',h_ii,1,nstate)
 
 
   ! Repeat contraction and print for hamiltonian_exx_beta matrix
-  call matrix_ao_to_mo_diag(c_matrix_restart,RESHAPE(hamiltonian_exx_beta,(/basis%nbf,basis%nbf,1/)),h_ii)
-  call dump_out_energy('=== Beta component of exchange expectation value ===',occupation,h_ii)
-  call dump_out_energy_yaml('beta component of exchange expectation value',h_ii,1,nstate)
+  !call matrix_ao_to_mo_diag(c_matrix_restart,RESHAPE(hamiltonian_exx_beta,(/basis%nbf,basis%nbf,1/)),h_ii)
+  !call dump_out_energy('=== Beta component of exchange expectation value ===',occupation,h_ii)
+  !call dump_out_energy_yaml('beta component of exchange expectation value',h_ii,1,nstate)
 
 
   ! Repeat contraction and print for hamiltonian_xc matrix
