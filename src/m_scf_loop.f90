@@ -163,11 +163,6 @@ subroutine scf_loop(is_restart,&
      ! Begin CMK
      ! Catch hamiltonian_xc matrix before modification
      hamiltonian_vxc(:,:,:) = hamiltonian_xc(:,:,:)
-
-     !!!debug
-     print *,"en_gks%xc",en_gks%xc
-     print *,"contents of hamiltonian vxc matrix=",hamiltonian_vxc(:,:,:)
-     ! End CMK     
    endif
 
 
@@ -511,9 +506,6 @@ subroutine print_hartee_expectation(basis,p_matrix,c_matrix,occupation,hamiltoni
  call dump_out_energy_yaml('hartree expectation value',h_ii,1,nstate)
  write(stdout,'(1x,a,2(3x,f12.6))') 'Hartree  HOMO expectation (eV):',h_ii(nocc,:) * Ha_eV
 
-
-
-
  call matrix_ao_to_mo_diag(c_matrix_restart,hamiltonian_exx,h_ii)
  call dump_out_energy('=== Exchange expectation value ===',occupation,h_ii)
  call dump_out_energy_yaml('exchange expectation value',h_ii,1,nstate)
@@ -655,7 +647,6 @@ subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx
   call matrix_ao_to_mo_diag(c_matrix_restart,hamiltonian_vxc,h_ii)
   call dump_out_energy('=== XC potential expectation value ===',occupation,h_ii)
   call dump_out_energy_yaml('XC potential expectation value',h_ii,1,nstate)
-
 
 
   ! deallocate non-output matrices
