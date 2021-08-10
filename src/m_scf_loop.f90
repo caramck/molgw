@@ -165,7 +165,17 @@ subroutine scf_loop(is_restart,&
    endif
    ! Begin CMK
    ! Catch hamiltonian_xc matrix before modification
+   !!!debug
+   print *, "shape of ham xc in right after catch = ",shape(hamiltonian_xc)
+   print *, "size of ham xc in right after catch = ",size(hamiltonian_xc)
+   print *, "contents of ham xc in right after catch  =",hamiltonian_xc(:,:,:)
+   !!!
    hamiltonian_vxc(:,:,:) = hamiltonian_vxc(:,:,:) + hamiltonian_xc(:,:,:)
+    !!!debug
+   print *, "shape of ham vxc in right after creation = ",shape(hamiltonian_vxc)
+   print *, "size of ham vxc in right after creation = ",size(hamiltonian_vxc)
+   print *, "contents of ham vxc in right after creation  =",hamiltonian_vxc(:,:,:)
+   !!!
    ! End CMK   
 
    !!!debug
