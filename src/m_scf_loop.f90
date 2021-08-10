@@ -72,7 +72,6 @@ subroutine scf_loop(is_restart,&
  real(dp),allocatable    :: hamiltonian_exx_beta(:,:,:)
  real(dp),allocatable    :: hamiltonian_exx_alpha(:,:,:)
  real(dp),allocatable    :: hamiltonian_vxc(:,:,:)
- real(dp),allocatable    :: ham_debug(:,:,:)
  ! End CMK
 !=====
 
@@ -266,13 +265,6 @@ subroutine scf_loop(is_restart,&
    !
    ! Add the XC part of the hamiltonian to the total hamiltonian
    hamiltonian(:,:,:) = hamiltonian(:,:,:) + hamiltonian_xc(:,:,:)
-
-   !!!debug
-   !pull out all other contributions to the Hamiltonian
-   ham_debug(:,:,:) = 0.0_dp
-   ham_debug(:,:,:) = hamiltonian(:,:,:) - (hamiltonian_exx(:,:,:) * beta_hybrid) - (hamiltonian_exx(:,:,:) * alpha_hybrid) - hamiltonian_hartree(:,:,:) - hamiltonian_kinetic(:,:,:) - hamiltonian_nucleus(:,:,:) 
-   print *,"ham_debug",ham_debug(:,:,:)
-   !!!
 
    ! All the components of the energy have been calculated at this stage
    ! Sum up to get the total energy
@@ -660,7 +652,7 @@ subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx
 
 
   ! Repeat contraction and print for hamiltonian_xc matrix
-  call matrix_ao_to_mo_diag(c_matrix_restart,RESHAPE(hamiltonian_vxc,(/basis%nbf,basis%nbf,1/)),h_ii)
+  call matrix_ao_to_mo_diag(c_matrix_restart,hamiltonian_vxc,h_ii)
   call dump_out_energy('=== XC potential expectation value ===',occupation,h_ii)
   call dump_out_energy_yaml('XC potential expectation value',h_ii,1,nstate)
 
