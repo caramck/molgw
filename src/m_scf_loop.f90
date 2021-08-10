@@ -171,18 +171,6 @@ subroutine scf_loop(is_restart,&
    print *, "contents of ham xc in right after catch  =",hamiltonian_xc(:,:,:)
    !!!
    hamiltonian_vxc(:,:,:) = hamiltonian_vxc(:,:,:) + hamiltonian_xc(:,:,:)
-    !!!debug
-   print *, "shape of ham vxc in right after creation = ",shape(hamiltonian_vxc)
-   print *, "size of ham vxc in right after creation = ",size(hamiltonian_vxc)
-   print *, "contents of ham vxc in right after creation  =",hamiltonian_vxc(:,:,:)
-   !!!
-   ! End CMK   
-
-   !!!debug
-   print *, "shape of ham vxc 1st = ",shape(hamiltonian_vxc)
-   print *, "size of ham vxc 1st = ",size(hamiltonian_vxc)
-   print *, "contents of ham vxc 1st =",hamiltonian_vxc(:,:,:)
-   !!!
 
    !
    ! LR Exchange contribution to the Hamiltonian
@@ -199,11 +187,6 @@ subroutine scf_loop(is_restart,&
      hamiltonian_exx_beta(:,:,:) = hamiltonian_exx_beta(:,:,:) + hamiltonian_exx(:,:,:) * beta_hybrid
      ! End CMK
 
-   !!!debug
-   print *, "shape of ham vxc after ref to xc = ",shape(hamiltonian_vxc)
-   print *, "size of ham vxc after ref to xc = ",size(hamiltonian_vxc)
-   print *, "contents of ham vxc after ref to xc =",hamiltonian_vxc(:,:,:)
-   !!!
 
    endif
 
@@ -222,11 +205,7 @@ subroutine scf_loop(is_restart,&
      hamiltonian_exx_alpha(:,:,:) = hamiltonian_exx_alpha(:,:,:) + hamiltonian_exx(:,:,:) * alpha_hybrid
      ! End CMK
    endif
-   !!!debug
-   print *, "shape of ham vxc in this spot 2= ",shape(hamiltonian_vxc)
-   print *, "size of ham vxc in this spot 2= ",size(hamiltonian_vxc)
-   print *, "contents of ham vxc in this spot 2=",hamiltonian_vxc(:,:,:)
-   !!!
+
 
    !
    ! QSGW or COHSEX self energy
@@ -288,13 +267,6 @@ subroutine scf_loop(is_restart,&
    ! Add the XC part of the hamiltonian to the total hamiltonian
    hamiltonian(:,:,:) = hamiltonian(:,:,:) + hamiltonian_xc(:,:,:)
 
-
-   !!!debug
-   print *, "shape of ham vxc in this spot = ",shape(hamiltonian_vxc)
-   print *, "size of ham vxc in this spot= ",size(hamiltonian_vxc)
-   print *, "contents of ham vxc in this spot =",hamiltonian_vxc(:,:,:)
-   !!!
-
    ! All the components of the energy have been calculated at this stage
    ! Sum up to get the total energy
    en_gks%total = en_gks%nuc_nuc + en_gks%kinetic + en_gks%nucleus + en_gks%hartree + en_gks%exx_hyb + en_gks%xc
@@ -314,11 +286,6 @@ subroutine scf_loop(is_restart,&
    ! DIIS or simple mixing on the hamiltonian
    call hamiltonian_prediction(s_matrix,x_matrix,p_matrix,hamiltonian,en_gks%total)
 
-   !!!debug
-   print *, "shape of ham vxc in this spot 3= ",shape(hamiltonian_vxc)
-   print *, "size of ham vxc in this spot 3= ",size(hamiltonian_vxc)
-   print *, "contents of ham vxc in this spot 3=",hamiltonian_vxc(:,:,:)
-   !!!
    !
    ! Diagonalize the Hamiltonian H
    ! Generalized eigenvalue problem with overlap matrix S
@@ -359,6 +326,11 @@ subroutine scf_loop(is_restart,&
    endif
    write(stdout,'(/,a25,1x,f19.10,/)') 'Total Energy    (Ha):',en_gks%total
 
+   !!!debug
+   print *, "shape of ham vxc in this spot 4.5 = ",shape(hamiltonian_vxc)
+   print *, "size of ham vxc in this spot 4.5= ",size(hamiltonian_vxc)
+   print *, "contents of ham vxc in this spot 4.5=",hamiltonian_vxc(:,:,:)
+   !!!
 
    ! If fractional occupancies are allowed, then recalculate the occupations
    if( temperature > 1.0e-8_dp ) then
@@ -370,7 +342,11 @@ subroutine scf_loop(is_restart,&
    ! Save the old one for the convergence criterium
    call setup_density_matrix(c_matrix,occupation,p_matrix)
 
-
+   !!!debug
+   print *, "shape of ham vxc in this spot 5 = ",shape(hamiltonian_vxc)
+   print *, "size of ham vxc in this spot 5= ",size(hamiltonian_vxc)
+   print *, "contents of ham vxc in this spot 5=",hamiltonian_vxc(:,:,:)
+   !!!
    !
    ! p_matrix preconditioning to damp out charge oscillations
    !
@@ -389,15 +365,19 @@ subroutine scf_loop(is_restart,&
      call write_restart(SMALL_RESTART,basis,occupation,c_matrix,energy)
    endif
 
-
+   !!!debug
+   print *, "shape of ham vxc in this spot 6 = ",shape(hamiltonian_vxc)
+   print *, "size of ham vxc in this spot 6= ",size(hamiltonian_vxc)
+   print *, "contents of ham vxc in this spot 6=",hamiltonian_vxc(:,:,:)
+   !!!
  !
  ! end of the big SCF loop
  enddo
 
  !!!debug
- print *, "shape of ham vxc in this spot 5= ",shape(hamiltonian_vxc)
- print *, "size of ham vxc in this spot 5= ",size(hamiltonian_vxc)
- print *, "contents of ham vxc in this spot 5=",hamiltonian_vxc(:,:,:)
+ print *, "shape of ham vxc in this spot 7= ",shape(hamiltonian_vxc)
+ print *, "size of ham vxc in this spot 7= ",size(hamiltonian_vxc)
+ print *, "contents of ham vxc in this spot 7=",hamiltonian_vxc(:,:,:)
  !!!
 
  write(stdout,'(/,1x,a)') '=================================================='
