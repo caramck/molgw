@@ -71,6 +71,7 @@ subroutine scf_loop(is_restart,&
  ! Begin CMK
  real(dp),allocatable    :: hamiltonian_exx_beta(:,:,:)
  real(dp),allocatable    :: hamiltonian_exx_alpha(:,:,:)
+ real(dp),allocatable    :: hamiltonian_vxc(:,:,:)
  ! End CMK
 !=====
 
@@ -93,11 +94,13 @@ subroutine scf_loop(is_restart,&
  !Begin CMK
  call clean_allocate('Alpha component exchange K',hamiltonian_exx_alpha,basis%nbf,basis%nbf,nspin)
  call clean_allocate('Beta component exchange K',hamiltonian_exx_beta,basis%nbf,basis%nbf,nspin)
+ call clean_allocate('Vxc component',hamiltonian_vxc,basis%nbf,basis%nbf,nspin)
  !End CMK
  hamiltonian_exx(:,:,:) = 0.0_dp
  ! Begin CMK
  hamiltonian_exx_alpha(:,:,:) = 0.0_dp
  hamiltonian_exx_beta(:,:,:) = 0.0_dp
+ hamiltonian_vxc(:,:,: = 0.0_dp)
  ! End CMK
 
  !
@@ -160,11 +163,15 @@ subroutine scf_loop(is_restart,&
    if( calc_type%is_dft ) then
      call dft_exc_vxc_batch(BATCH_SIZE,basis,occupation,c_matrix,hamiltonian_xc,en_gks%xc)
    endif
+   ! Begin CMK
+   ! Catch hamiltonian_xc matrix before modification
+   hamiltonian_vxc(:,:,:) = hamiltonian_vxc(:,:,:) + hamiltonian_xc(:,:,:)
+   ! End CMK   
 
    !!!debug
-   print *, "shape of ham vxc 1st = ",shape(hamiltonian_xc)
-   print *, "size of ham vxc 1st = ",size(hamiltonian_xc)
-   print *, "contents of ham vxc 1st =",hamiltonian_xc(:,:,:)
+   print *, "shape of ham vxc 1st = ",shape(hamiltonian_vxc)
+   print *, "size of ham vxc 1st = ",size(hamiltonian_vxc)
+   print *, "contents of ham vxc 1st =",hamiltonian_vxc(:,:,:)
    !!!
 
    !
@@ -373,7 +380,7 @@ subroutine scf_loop(is_restart,&
 
    ! Begin CMK
    ! Print the expectation values for each component involving exchange (alphaK, betaK, vxc)
-   call print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx_alpha,hamiltonian_exx_beta,hamiltonian_xc)
+   call print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx_alpha,hamiltonian_exx_beta,hamiltonian_vxc)
    ! End CMK
 
  endif
@@ -596,7 +603,7 @@ end subroutine print_expectations
 
 !Begin CMK
 !=========================================================================
-subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx_alpha,hamiltonian_exx_beta,hamiltonian_xc)
+subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx_alpha,hamiltonian_exx_beta,hamiltonian_vxc)
 ! Print out the alpha exchange, beta exchange, and vxc expectation values for each state
   implicit none
 
@@ -605,7 +612,7 @@ subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx
   real(dp),intent(in)        :: occupation(:,:)
   real(dp),intent(in)        :: hamiltonian_exx_alpha(:,:,:)
   real(dp),intent(inout)     :: hamiltonian_exx_beta(:,:,:)
-  real(dp),intent(inout)     :: hamiltonian_xc(:,:,:)
+  real(dp),intent(inout)     :: hamiltonian_vxc(:,:,:)
  !=====
   integer                 :: restart_type
   integer                 :: nstate,nocc,istate,ispin
@@ -650,13 +657,13 @@ subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx
 
 
   !!!debug
- print *, "shape of ham vxc in routine = ",shape(hamiltonian_xc)
- print *, "size of ham vxc in routine = ",size(hamiltonian_xc)
- print *, "contents of ham vxc in routine = ",hamiltonian_xc(:,:,:)
+ print *, "shape of ham vxc in routine = ",shape(hamiltonian_vxc)
+ print *, "size of ham vxc in routine = ",size(hamiltonian_vxc)
+ print *, "contents of ham vxc in routine = ",hamiltonian_vxc(:,:,:)
  !!!
 
   ! Repeat contraction and print for hamiltonian_xc matrix
-  call matrix_ao_to_mo_diag(c_matrix_restart,RESHAPE(hamiltonian_xc,(/basis%nbf,basis%nbf,1/)),h_ii)
+  call matrix_ao_to_mo_diag(c_matrix_restart,RESHAPE(hamiltonian_vxc,(/basis%nbf,basis%nbf,1/)),h_ii)
   call dump_out_energy('=== XC potential expectation value ===',occupation,h_ii)
   call dump_out_energy_yaml('XC potential expectation value',h_ii,1,nstate)
 
