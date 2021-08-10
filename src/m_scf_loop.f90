@@ -165,12 +165,6 @@ subroutine scf_loop(is_restart,&
    endif
    ! Begin CMK
    ! Catch hamiltonian_xc matrix before modification
-   !!!debug
-   print *, "shape of ham xc in right after catch = ",shape(hamiltonian_xc)
-   print *, "size of ham xc in right after catch = ",size(hamiltonian_xc)
-   print *, "contents of ham xc in right after catch  =",hamiltonian_xc(:,:,:)
-   print *, "en_gks%xc after catch=",en_gks%xc
-   !!!
    hamiltonian_vxc(:,:,:) = hamiltonian_xc(:,:,:)
 
    !
@@ -185,7 +179,7 @@ subroutine scf_loop(is_restart,&
 
      ! Begin CMK
      ! Catch hamiltonian_exx matrix with lr erf contribution
-     hamiltonian_exx_beta(:,:,:) = hamiltonian_exx_beta(:,:,:) + hamiltonian_exx(:,:,:) * beta_hybrid
+     hamiltonian_exx_beta(:,:,:) = hamiltonian_exx(:,:,:) * beta_hybrid
      ! End CMK
 
 
@@ -203,7 +197,7 @@ subroutine scf_loop(is_restart,&
 
      ! Begin CMK
      ! Catch hamiltonian_exx matrix with ex contribution
-     hamiltonian_exx_alpha(:,:,:) = hamiltonian_exx_alpha(:,:,:) + hamiltonian_exx(:,:,:) * alpha_hybrid
+     hamiltonian_exx_alpha(:,:,:) = hamiltonian_exx(:,:,:) * alpha_hybrid
      ! End CMK
    endif
 
@@ -354,22 +348,8 @@ subroutine scf_loop(is_restart,&
  !
  ! end of the big SCF loop
 
-  !!!debug
-  print *, "shape of ham vxc in this spot 6.5 = ",shape(hamiltonian_vxc)
-  print *, "size of ham vxc in this spot 6.5= ",size(hamiltonian_vxc)
-  print *, "contents of ham vxc in this spot 6.5=",hamiltonian_vxc(:,:,:)
-  print *, "en_gks%xc 6.5=",en_gks%xc
-  !!!  
-
-  
  enddo
 
- !!!debug
- print *, "shape of ham vxc in this spot 7= ",shape(hamiltonian_vxc)
- print *, "size of ham vxc in this spot 7= ",size(hamiltonian_vxc)
- print *, "contents of ham vxc in this spot 7=",hamiltonian_vxc(:,:,:)
- print *, "en_gks%xc 7=",en_gks%xc
- !!!
 
  write(stdout,'(/,1x,a)') '=================================================='
  write(stdout,'(1x,a)') 'The SCF loop ends here'
@@ -382,11 +362,6 @@ subroutine scf_loop(is_restart,&
  call destroy_scf()
  if( calc_type%is_dft ) call destroy_dft_grid()
 
- !!!debug
- print *, "shape of ham vxc before hartree loop = ",shape(hamiltonian_vxc)
- print *, "size of ham vxc before hartree loop= ",size(hamiltonian_vxc)
- print *, "contents of ham vxc before hartree loop =",hamiltonian_vxc(:,:,:)
- !!!
 
  if( print_hartree_ ) then
    call print_hartee_expectation(basis,p_matrix,c_matrix,occupation,hamiltonian_hartree,hamiltonian_exx)
@@ -394,14 +369,6 @@ subroutine scf_loop(is_restart,&
 
    ! Begin CMK
    ! Print the expectation values for each component involving exchange (alphaK, betaK, vxc)
-
-   !!!debug
-   print *, "shape of ham vxc in print hartree loop = ",shape(hamiltonian_vxc)
-   print *, "size of ham vxc in print hartree loop= ",size(hamiltonian_vxc)
-   print *, "contents of ham vxc in print hartree loop =",hamiltonian_vxc(:,:,:)
-   print *, "en_gks%xc in print hartree loop=",en_gks%xc
-   !!!
-
    call print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx_alpha,hamiltonian_exx_beta,hamiltonian_vxc)
    ! End CMK
 
