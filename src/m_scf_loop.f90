@@ -166,7 +166,7 @@ subroutine scf_loop(is_restart,&
 
      !!!debug
      print *,"en_gks%xc",en_gks%xc
-
+     call print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx_alpha,hamiltonian_exx_beta,hamiltonian_vxc)
      ! End CMK     
    endif
 
