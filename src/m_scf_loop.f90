@@ -388,6 +388,11 @@ subroutine scf_loop(is_restart,&
  call destroy_scf()
  if( calc_type%is_dft ) call destroy_dft_grid()
 
+ !!!debug
+ print *, "shape of ham vxc before hartree loop = ",shape(hamiltonian_vxc)
+ print *, "size of ham vxc before hartree loop= ",size(hamiltonian_vxc)
+ print *, "contents of ham vxc before hartree loop =",hamiltonian_vxc(:,:,:)
+ !!!
 
  if( print_hartree_ ) then
    call print_hartee_expectation(basis,p_matrix,c_matrix,occupation,hamiltonian_hartree,hamiltonian_exx)
