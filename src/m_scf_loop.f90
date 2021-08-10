@@ -306,11 +306,6 @@ subroutine scf_loop(is_restart,&
 
    call output_homolumo('gKS',occupation,energy,1,nstate)
 
-   !!!debug
-   print *, "shape of ham vxc in this spot 4 = ",shape(hamiltonian_vxc)
-   print *, "size of ham vxc in this spot 4= ",size(hamiltonian_vxc)
-   print *, "contents of ham vxc in this spot 4=",hamiltonian_vxc(:,:,:)
-   !!!
    !
    ! Output the total energy and its components
    write(stdout,*)
@@ -326,11 +321,6 @@ subroutine scf_loop(is_restart,&
    endif
    write(stdout,'(/,a25,1x,f19.10,/)') 'Total Energy    (Ha):',en_gks%total
 
-   !!!debug
-   print *, "shape of ham vxc in this spot 4.5 = ",shape(hamiltonian_vxc)
-   print *, "size of ham vxc in this spot 4.5= ",size(hamiltonian_vxc)
-   print *, "contents of ham vxc in this spot 4.5=",hamiltonian_vxc(:,:,:)
-   !!!
 
    ! If fractional occupancies are allowed, then recalculate the occupations
    if( temperature > 1.0e-8_dp ) then
@@ -342,11 +332,6 @@ subroutine scf_loop(is_restart,&
    ! Save the old one for the convergence criterium
    call setup_density_matrix(c_matrix,occupation,p_matrix)
 
-   !!!debug
-   print *, "shape of ham vxc in this spot 5 = ",shape(hamiltonian_vxc)
-   print *, "size of ham vxc in this spot 5= ",size(hamiltonian_vxc)
-   print *, "contents of ham vxc in this spot 5=",hamiltonian_vxc(:,:,:)
-   !!!
    !
    ! p_matrix preconditioning to damp out charge oscillations
    !
@@ -372,6 +357,14 @@ subroutine scf_loop(is_restart,&
    !!!
  !
  ! end of the big SCF loop
+
+  !!!debug
+  print *, "shape of ham vxc in this spot 6.5 = ",shape(hamiltonian_vxc)
+  print *, "size of ham vxc in this spot 6.5= ",size(hamiltonian_vxc)
+  print *, "contents of ham vxc in this spot 6.5=",hamiltonian_vxc(:,:,:)
+  !!!  
+
+  
  enddo
 
  !!!debug
