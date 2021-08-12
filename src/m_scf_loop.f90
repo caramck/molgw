@@ -149,7 +149,7 @@ subroutine scf_loop(is_restart,&
      !!!debug
      print *, "shape of ham hartree 1st = ",shape(hamiltonian_hartree)
      print *, "size of ham hartree 1st = ",size(hamiltonian_hartree)
-     print *, "contents of ham hartree 1st =",hamiltonian_hartree(:,:)
+     print *, "contents of h_ii =",hamiltonian_hartree(:,:)
      !!!
 
    enddo
