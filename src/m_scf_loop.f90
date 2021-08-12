@@ -163,6 +163,7 @@ subroutine scf_loop(is_restart,&
      ! Begin CMK
      ! Catch hamiltonian_xc matrix before modification
      hamiltonian_vxc(:,:,:) = hamiltonian_xc(:,:,:)
+     ! End CMK
    endif
 
 
