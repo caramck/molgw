@@ -145,12 +145,6 @@ subroutine scf_loop(is_restart,&
    endif
    do ispin=1,nspin
      hamiltonian(:,:,ispin) = hamiltonian(:,:,ispin) + hamiltonian_hartree(:,:)
-    
-     !!!debug
-     print *, "shape of ham hartree 1st = ",shape(hamiltonian_hartree)
-     print *, "size of ham hartree 1st = ",size(hamiltonian_hartree)
-     print *, "contents of h_ii =",hamiltonian_hartree(:,:)
-     !!!
 
    enddo
 
@@ -507,24 +501,11 @@ subroutine print_hartee_expectation(basis,p_matrix,c_matrix,occupation,hamiltoni
    write(stdout,'(1x,a,a)') 'RESTART file read: ','RESTART_TEST'
  endif
 
- !!!debug
- print *, "shape of ham hartree in routine = ",shape(hamiltonian_hartree)
- print *, "size of ham hartree in routine = ",size(hamiltonian_hartree)
- print *, "contents of ham hartree in routine = ",hamiltonian_hartree(:,:)
- !!!
-
  call matrix_ao_to_mo_diag(c_matrix_restart,RESHAPE(hamiltonian_hartree,(/basis%nbf,basis%nbf,1/)),h_ii)
  call dump_out_energy('=== Hartree expectation value ===',occupation,h_ii)
  call dump_out_energy_yaml('hartree expectation value',h_ii,1,nstate)
  write(stdout,'(1x,a,2(3x,f12.6))') 'Hartree  HOMO expectation (eV):',h_ii(nocc,:) * Ha_eV
-
- !!!debug
- print *, "shape of hii in routine = ",shape(h_ii)
- print *, "size of hii in routine = ",size(h_ii)
- print *, "contents of h_ii =",h_ii(:,:)
- !!!
-
-
+ 
  call matrix_ao_to_mo_diag(c_matrix_restart,hamiltonian_exx,h_ii)
  call dump_out_energy('=== Exchange expectation value ===',occupation,h_ii)
  call dump_out_energy_yaml('exchange expectation value',h_ii,1,nstate)
