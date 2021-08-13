@@ -145,6 +145,12 @@ subroutine scf_loop(is_restart,&
    endif
    do ispin=1,nspin
      hamiltonian(:,:,ispin) = hamiltonian(:,:,ispin) + hamiltonian_hartree(:,:)
+    
+     !!!debug
+     print *, "shape of ham hartree 1st = ",shape(hamiltonian_hartree)
+     print *, "size of ham hartree 1st = ",size(hamiltonian_hartree)
+     print *, "contents of h_ii =",hamiltonian_hartree(:,:)
+     !!!
 
    enddo
 
