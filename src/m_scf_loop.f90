@@ -145,13 +145,6 @@ subroutine scf_loop(is_restart,&
    endif
    do ispin=1,nspin
      hamiltonian(:,:,ispin) = hamiltonian(:,:,ispin) + hamiltonian_hartree(:,:)
-    
-     !!!debug
-     print *, "shape of ham hartree 1st = ",shape(hamiltonian_hartree)
-     print *, "size of ham hartree 1st = ",size(hamiltonian_hartree)
-     print *, "contents of h_ii =",hamiltonian_hartree(:,:)
-     !!!
-
    enddo
 
 
@@ -186,8 +179,6 @@ subroutine scf_loop(is_restart,&
      ! Catch hamiltonian_exx matrix with lr erf contribution
      hamiltonian_exx_beta(:,:,:) = hamiltonian_exx(:,:,:) * beta_hybrid
      ! End CMK
-
-
    endif
 
    !
@@ -597,8 +588,9 @@ end subroutine print_expectations
 
 !Begin CMK
 !=========================================================================
-subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx_alpha,hamiltonian_exx_beta,hamiltonian_vxc)
 ! Print out the alpha exchange, beta exchange, and vxc expectation values for each state
+subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx_alpha,hamiltonian_exx_beta,hamiltonian_vxc)
+
   implicit none
 
   type(basis_set),intent(in) :: basis
