@@ -641,7 +641,7 @@ subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_vxc
   !call dump_out_energy_yaml('beta component of exchange expectation value',h_ii,1,nstate)
 
   ! Repeat contraction and print for hamiltonian_xc matrix
-  call matrix_ao_to_mo_diag(c_matrix_restart,hamiltonian_vxc,h_ii)
+  call matrix_ao_to_mo(c_matrix_restart,hamiltonian_vxc,h_ii)
   call dump_out_energy('=== XC potential expectation value ===',occupation,h_ii)
   call dump_out_energy_yaml('XC potential expectation value',h_ii,1,nstate)
 
