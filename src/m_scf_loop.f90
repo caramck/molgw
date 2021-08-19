@@ -162,6 +162,7 @@ subroutine scf_loop(is_restart,&
      ! Begin CMK
      ! Catch hamiltonian_xc matrix before modification
      hamiltonian_vxc(:,:,:) = hamiltonian_xc(:,:,:)
+     call print_exchange_expectations(basis,c_matrix,occupation,0.0_dp,0.0_dp,hamiltonian_vxc)
      ! End CMK
    endif
 
