@@ -604,8 +604,8 @@ subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_vxc
   integer                 :: restart_type
   integer                 :: nstate,nocc,istate,ispin
   real(dp),allocatable    :: c_matrix_restart(:,:,:)
+  real(dp),allocatable    :: i_matrix(:,:,:)
   real(dp),allocatable    :: h_ii(:,:)
-  real(dp),allocatable    :: h_ij(:,:,:)
   real(dp),allocatable    :: energy_restart(:,:),occupation_restart(:,:)
  !=====
 
@@ -613,7 +613,7 @@ subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_vxc
   nocc   = get_number_occupied_states(occupation)
   ! Clear h_ii matrix
   h_ii(:,:) = 0.0_dp
-  h_ij(:,:,:) = 0.0_dp
+  i_matrix(:,:,:) = 1.0_dp
 
   !Read RESTART
   call clean_allocate('RESTART: C',c_matrix_restart,basis%nbf,nstate,nspin)
@@ -643,13 +643,13 @@ subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_vxc
   !call dump_out_energy_yaml('beta component of exchange expectation value',h_ii,1,nstate)
 
   ! Repeat contraction and print for hamiltonian_xc matrix
-  call matrix_ao_to_mo(c_matrix_restart,hamiltonian_vxc,h_ij)
-  call dump_out_energy('=== XC potential expectation value ===',occupation,h_ij)
-  call dump_out_energy_yaml('XC potential expectation value',h_ij,1,nstate)
+  call matrix_ao_to_mo_diag(i_matrix,hamiltonian_vxc,h_ii)
+  call dump_out_energy('=== XC potential expectation value ===',occupation,h_ii)
+  call dump_out_energy_yaml('XC potential expectation value',h_ii,1,nstate)
 
 
   ! deallocate non-output matrices
-  deallocate(h_ij)
+  deallocate(h_ii)
   deallocate(energy_restart,occupation_restart)
   call clean_deallocate('RESTART: C',c_matrix_restart)
 
