@@ -161,9 +161,9 @@ subroutine scf_loop(is_restart,&
      call dft_exc_vxc_batch(BATCH_SIZE,basis,occupation,c_matrix,hamiltonian_xc,en_gks%xc)
      ! Begin CMK
      ! Catch hamiltonian_xc matrix before modification
-     hamiltonian_vxc(:,:,:) = hamiltonian_xc(:,:,:)
+     hamiltonian_vxc(:,:,:) = hamiltonian_xc(:,:,:) * p_matrix(:,:,:)
      !!!!debug
-     print *,"sum ham_vxc * c_matrix", SUM( hamiltonian_vxc(:,:,:) * c_matrix(:,:,:) )
+     print *,"sum ham_vxc * p_matrix", SUM( hamiltonian_vxc(:,:,:) * p_matrix(:,:,:) )
      call print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_vxc)
      !!!!end_debug
      ! End CMK
