@@ -161,10 +161,13 @@ subroutine scf_loop(is_restart,&
      call dft_exc_vxc_batch(BATCH_SIZE,basis,occupation,c_matrix,hamiltonian_xc,en_gks%xc)
      ! Begin CMK
      ! Catch hamiltonian_xc matrix before modification
-     hamiltonian_vxc(:,:,:) = hamiltonian_xc(:,:,:) * p_matrix(:,:,:)
+     hamiltonian_vxc(:,:,:) = hamiltonian_xc(:,:,:)
      !!!!debug
-     print *,"sum ham_vxc * p_matrix", SUM( hamiltonian_vxc(:,:,:) * p_matrix(:,:,:) )
+     print *,"sum ham_vxc * 0.5 * p_matrix", (0.5_dp * SUM( hamiltonian_vxc(:,:,:) * (REAL(p_matrix(:,:,:),dp) ) ) )
+     print *, 'weird exchange expectation'
      call print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_vxc)
+     print *, 'normal exchange expectation'
+     call print_exchange_expectations(basis,c_matrix,occupation, hamiltonian_vxc(:,:,:) * (REAL(p_matrix(:,:,:),dp) ) )
      !!!!end_debug
      ! End CMK
    endif
