@@ -163,7 +163,7 @@ subroutine scf_loop(is_restart,&
      ! Catch hamiltonian_xc matrix before modification
      hamiltonian_vxc(:,:,:) = hamiltonian_xc(:,:,:)
      !!!!debug
-     print *,"sum ham_vxc * p_matrix", SUM( hamiltonian_vxc(:,:,:) * SUM(p_matrix(:,:,:),DIM=3) )
+     print *,"sum ham_vxc * p_matrix", SUM( hamiltonian_vxc(:,:,:) * p_matrix(:,:,:) )
      call print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_vxc)
      !!!!end_debug
      ! End CMK
