@@ -162,7 +162,10 @@ subroutine scf_loop(is_restart,&
      ! Begin CMK
      ! Catch hamiltonian_xc matrix before modification
      hamiltonian_vxc(:,:,:) = hamiltonian_xc(:,:,:)
+     !!!!debug
+     print *,"sum ham_vxc * p_matrix", SUM( hamiltonian_vxc(:,:,:) * SUM(p_matrix(:,:,:),DIM=3) )
      call print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_vxc)
+     !!!!end_debug
      ! End CMK
    endif
 
@@ -613,7 +616,6 @@ subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_vxc
   nocc   = get_number_occupied_states(occupation)
   ! Clear h_ii matrix
   h_ii(:,:) = 0.0_dp
-  i_matrix(:,:,:) = 1.0_dp
 
   !Read RESTART
   call clean_allocate('RESTART: C',c_matrix_restart,basis%nbf,nstate,nspin)
@@ -643,7 +645,7 @@ subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_vxc
   !call dump_out_energy_yaml('beta component of exchange expectation value',h_ii,1,nstate)
 
   ! Repeat contraction and print for hamiltonian_xc matrix
-  call matrix_ao_to_mo_diag(i_matrix,hamiltonian_vxc,h_ii)
+  call matrix_ao_to_mo_diag(c_matrix_restart,hamiltonian_vxc,h_ii)
   call dump_out_energy('=== XC potential expectation value ===',occupation,h_ii)
   call dump_out_energy_yaml('XC potential expectation value',h_ii,1,nstate)
 
@@ -654,6 +656,8 @@ subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_vxc
   call clean_deallocate('RESTART: C',c_matrix_restart)
 
  end subroutine print_exchange_expectations
+
+
 
 ! End CMK
 
