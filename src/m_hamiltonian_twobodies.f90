@@ -974,15 +974,18 @@ end subroutine setup_exchange_ri_cmplx
 ! Calculate the exchange-correlation potential and energy
 ! * subroutine works for both real and complex wavefunctions c_matrix
 !   using "class" syntax of Fortran2003
-subroutine dft_exc_vxc_batch(batch_size,basis,occupation,c_matrix,vxc_ao,exc_xc)
+subroutine dft_exc_vxc_batch(batch_size,basis,occupation,c_matrix,vxc_ao,exc_xc,exc_ao)
  implicit none
 
- integer,intent(in)         :: batch_size
- type(basis_set),intent(in) :: basis
- real(dp),intent(in)        :: occupation(:,:)
- class(*),intent(in)        :: c_matrix(:,:,:)
- real(dp),intent(out)       :: vxc_ao(:,:,:)
- real(dp),intent(out)       :: exc_xc
+ integer,intent(in)             :: batch_size
+ type(basis_set),intent(in)     :: basis
+ real(dp),intent(in)            :: occupation(:,:)
+ class(*),intent(in)            :: c_matrix(:,:,:)       
+ real(dp),intent(out)           :: vxc_ao(:,:,:)
+ real(dp),intent(out)           :: exc_xc
+ !begin CMK
+ real(dp),intent(out),optional  :: exc_ao(:,:,:)
+ !end CMK
 !=====
  real(dp),parameter   :: TOL_RHO=1.0e-9_dp
  integer              :: nstate
@@ -993,6 +996,9 @@ subroutine dft_exc_vxc_batch(batch_size,basis,occupation,c_matrix,vxc_ao,exc_xc)
  real(dp)             :: normalization(nspin)
  real(dp),allocatable :: weight_batch(:)
  real(dp),allocatable :: tmp_batch(:,:)
+ !Begin CMK
+ real(dp),allocatable :: exc_ao_batch(:)
+ !End CMK
  real(dp),allocatable :: basis_function_r_batch(:,:)
  real(dp),allocatable :: bf_gradx_batch(:,:)
  real(dp),allocatable :: bf_grady_batch(:,:)
@@ -1010,6 +1016,9 @@ subroutine dft_exc_vxc_batch(batch_size,basis,occupation,c_matrix,vxc_ao,exc_xc)
 
  exc_xc = 0.0_dp
  vxc_ao(:,:,:) = 0.0_dp
+ !Begin CMK
+ exc_ao(:,:,:) = 0.0_dp
+ !End CMK
 
  if( dft_xc(1)%nxc == 0 ) return
 
@@ -1141,6 +1150,7 @@ subroutine dft_exc_vxc_batch(batch_size,basis,occupation,c_matrix,vxc_ao,exc_xc)
 
      dedd_r_batch(:,:) = dedd_r_batch(:,:) + vrho_batch(:,:) * dft_xc(ixc)%coeff
 
+
      !
      ! Set up divergence term if needed (GGA case)
      !
@@ -1170,9 +1180,9 @@ subroutine dft_exc_vxc_batch(batch_size,basis,occupation,c_matrix,vxc_ao,exc_xc)
 
    enddo ! loop on the XC functional
 
+
+
    call stop_clock(timing_xxdft_libxc)
-
-
 
    !
    ! Eventually set up the vxc term
@@ -1221,10 +1231,37 @@ subroutine dft_exc_vxc_batch(batch_size,basis,occupation,c_matrix,vxc_ao,exc_xc)
        endif
      endif
 
+     !Begin CMK
+     !Create e_xc matrix in ao basis
+     
+     !initialize matrices
+      exc_ao_batch(:) = 0.0_dp
+      tmp_exc_batch(:,:) = 0.0_dp
+
+      ! Create temporary exc matrix that updates with batch
+      exc_ao_batch(:) = exc_ao_batch(:) + weight_batch(:) * exc_batch(:) * SUM(rhor_batch(:,:),DIM=1) * dft_xc(ixc)%coeff
+   
+      ! Send exc matrix to ao basis representation
+      !$OMP PARALLEL DO
+      do ir=1,nr
+        tmp_exc_batch(:,ir) = SQRT( MAX(exc_ao_batch(:),1.1e-15_dp) ) * basis_function_r_batch(:,ir)
+      enddo
+      !$OMP END PARALLEL DO
+
+      !Get an nbf x nbf matrix
+      call DSYRK('L','N',basis%nbf,nr,-1.0d0,tmp_exc_batch,basis%nbf,1.0d0,exc_ao(:,:,ispin),basis%nbf)
+
+      deallocate(tmp_exc_batch)
+      deallocate(exc_ao_batch)
+
+      !End CMK
+
    enddo
    deallocate(tmp_batch)
 
    call stop_clock(timing_xxdft_vxc)
+
+
 
 
    deallocate(weight_batch)
@@ -1246,14 +1283,15 @@ subroutine dft_exc_vxc_batch(batch_size,basis,occupation,c_matrix,vxc_ao,exc_xc)
  enddo ! loop on the batches
 
 
-
-
  ! Symmetrize now
  do ispin=1,nspin
    do jbf=1,basis%nbf
      do ibf=jbf+1,basis%nbf
        vxc_ao(jbf,ibf,ispin) = vxc_ao(ibf,jbf,ispin)
-     enddo
+       !Begin CMK
+       exc_ao(jbf,ibf,ispin) = exc_ao(jbf,ibf,ispin)
+       !End CMK
+      enddo
    enddo
  enddo
 
@@ -1262,7 +1300,9 @@ subroutine dft_exc_vxc_batch(batch_size,basis,occupation,c_matrix,vxc_ao,exc_xc)
  call grid%sum(normalization)
  call grid%sum(vxc_ao)
  call grid%sum(exc_xc)
-
+ !Begin CMK
+ call grid%sum(exc_ao)
+ !End CMK
 
 #else
  write(stdout,*) 'XC energy and potential set to zero'
