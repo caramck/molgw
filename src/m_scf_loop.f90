@@ -99,7 +99,6 @@ subroutine scf_loop(is_restart,&
  ! Begin CMK
  hamiltonian_exx_alpha(:,:,:) = 0.0_dp
  hamiltonian_exx_beta(:,:,:) = 0.0_dp
- hamiltonian_vxc(:,:,:) = 0.0_dp
  ! End CMK
 
  !
