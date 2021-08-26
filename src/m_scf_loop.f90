@@ -366,7 +366,7 @@ subroutine scf_loop(is_restart,&
 
    ! Begin CMK
    ! Print the expectation values for each component involving exchange (alphaK, betaK, vxc)
-   call print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_vxc)
+   call print_exchange_expectations(basis,c_matrix,occupation,exc_ao)
    ! End CMK
 
  endif
@@ -401,7 +401,6 @@ subroutine scf_loop(is_restart,&
  call clean_deallocate('Exchange operator Sigx',hamiltonian_exx)
  call clean_deallocate('XC operator Vxc',hamiltonian_xc)
  !Begin CMK
- call clean_deallocate('XC operator Vxc',hamiltonian_vxc)
  call clean_deallocate('Alpha exchange hexx_alpha',hamiltonian_exx_alpha)
  call clean_deallocate('Beta exchange hexx_beta',hamiltonian_exx_beta)
  !End CMK
@@ -590,7 +589,7 @@ end subroutine print_expectations
 !Begin CMK
 !=========================================================================
 ! Print out the alpha exchange, beta exchange, and vxc expectation values for each state
-subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_vxc)
+subroutine print_exchange_expectations(basis,c_matrix,occupation,exc_ao)
 
   implicit none
 
@@ -599,7 +598,7 @@ subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_vxc
   real(dp),intent(in)        :: occupation(:,:)
   !real(dp),intent(in)        :: hamiltonian_exx_alpha(:,:,:)
   !real(dp),intent(in)        :: hamiltonian_exx_beta(:,:,:)
-  real(dp),intent(in)        :: hamiltonian_vxc(:,:,:)
+  real(dp),intent(in)        :: exc_ao():,:,:)
  !=====
   integer                 :: restart_type
   integer                 :: nstate,nocc,istate,ispin
@@ -642,7 +641,7 @@ subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_vxc
   !call dump_out_energy_yaml('beta component of exchange expectation value',h_ii,1,nstate)
 
   ! Repeat contraction and print for hamiltonian_xc matrix
-  call matrix_ao_to_mo_diag(c_matrix_restart,hamiltonian_vxc,h_ii)
+  call matrix_ao_to_mo_diag(c_matrix_restart,exc_ao,h_ii)
   call dump_out_energy('=== XC potential expectation value ===',occupation,h_ii)
   call dump_out_energy_yaml('XC potential expectation value',h_ii,1,nstate)
 
