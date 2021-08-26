@@ -71,7 +71,7 @@ subroutine scf_loop(is_restart,&
  ! Begin CMK
  real(dp),allocatable    :: hamiltonian_exx_beta(:,:,:)
  real(dp),allocatable    :: hamiltonian_exx_alpha(:,:,:)
- real(dp),allocatable    :: hamiltonian_vxc(:,:,:)
+ real(dp),allocatable    :: exc_ao(:,:,:)
  ! End CMK
 !=====
 
