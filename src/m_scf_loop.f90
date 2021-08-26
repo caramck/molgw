@@ -152,6 +152,7 @@ subroutine scf_loop(is_restart,&
    !  XC part of the Hamiltonian
    !
    hamiltonian_xc(:,:,:) = 0.0_dp
+   exc_ao(:,:,:) = 0.0_dp
    en_gks%exx_hyb = 0.0_dp
 
    !
