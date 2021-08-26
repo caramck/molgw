@@ -598,7 +598,7 @@ subroutine print_exchange_expectations(basis,c_matrix,occupation,exc_ao)
   real(dp),intent(in)        :: occupation(:,:)
   !real(dp),intent(in)        :: hamiltonian_exx_alpha(:,:,:)
   !real(dp),intent(in)        :: hamiltonian_exx_beta(:,:,:)
-  real(dp),intent(in)        :: exc_ao():,:,:)
+  real(dp),intent(in)        :: exc_ao(:,:,:)
  !=====
   integer                 :: restart_type
   integer                 :: nstate,nocc,istate,ispin
