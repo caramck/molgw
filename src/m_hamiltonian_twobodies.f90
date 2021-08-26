@@ -998,7 +998,7 @@ subroutine dft_exc_vxc_batch(batch_size,basis,occupation,c_matrix,vxc_ao,exc_xc,
  real(dp),allocatable :: tmp_batch(:,:)
  !Begin CMK
  real(dp),allocatable :: exc_ao_batch(:)
- real(dp),allocatable :: tmp_exc_batch(:)
+ real(dp),allocatable :: tmp_exc_batch(:,:)
  !End CMK
  real(dp),allocatable :: basis_function_r_batch(:,:)
  real(dp),allocatable :: bf_gradx_batch(:,:)
