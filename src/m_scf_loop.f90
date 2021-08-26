@@ -94,7 +94,6 @@ subroutine scf_loop(is_restart,&
  !Begin CMK
  call clean_allocate('Alpha component exchange K',hamiltonian_exx_alpha,basis%nbf,basis%nbf,nspin)
  call clean_allocate('Beta component exchange K',hamiltonian_exx_beta,basis%nbf,basis%nbf,nspin)
- call clean_allocate('Vxc component',hamiltonian_vxc,basis%nbf,basis%nbf,nspin)
  !End CMK
  hamiltonian_exx(:,:,:) = 0.0_dp
  ! Begin CMK
