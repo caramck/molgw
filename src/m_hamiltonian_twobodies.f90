@@ -1240,18 +1240,23 @@ subroutine dft_exc_vxc_batch(batch_size,basis,occupation,c_matrix,vxc_ao,exc_xc,
      tmp_exc_batch(:,:) = 0.0_dp
 
       ! Create temporary exc matrix that updates with batch
+     print *, "line 1243 in dft_vxc routine"
      exc_ao_batch(:) = exc_ao_batch(:) + weight_batch(:) * exc_batch(:) * SUM(rhor_batch(:,:),DIM=1) * dft_xc(ixc)%coeff
-   
+     
       ! Send exc matrix to ao basis representation
+     print *, "line 1247 in dft_vxc routine"
      do ir=1,nr
         tmp_exc_batch(:,ir) = SQRT( MAX(exc_ao_batch(:),1.1e-15_dp) ) * basis_function_r_batch(:,ir)
      enddo
 
      !Get an nbf x nbf matrix
+     print *, "line 1253 in dft_vxc routine"
      call DSYRK('L','N',basis%nbf,nr,-1.0d0,tmp_exc_batch,basis%nbf,1.0d0,exc_ao(:,:,ispin),basis%nbf)
 
      deallocate(tmp_exc_batch)
      deallocate(exc_ao_batch)
+
+     print *, "line 1259 in dft_vxc routine"
 
      !End CMK
 
