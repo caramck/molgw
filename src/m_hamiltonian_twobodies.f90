@@ -1014,8 +1014,7 @@ subroutine dft_exc_vxc_batch(batch_size,basis,occupation,c_matrix,vxc_ao,exc_xc,
  real(C_DOUBLE),allocatable :: exc_batch(:)
  real(C_DOUBLE),allocatable :: vsigma_batch(:,:)
 !=====
-
- write(stdout,*) 'CMK in dft xc potential routine'
+ write(stdout,*) 'CMK dft routine 1'
 
  exc_xc = 0.0_dp
  vxc_ao(:,:,:) = 0.0_dp
@@ -1023,8 +1022,10 @@ subroutine dft_exc_vxc_batch(batch_size,basis,occupation,c_matrix,vxc_ao,exc_xc,
  exc_ao(:,:,:) = 0.0_dp
  !End CMK
 
- if( dft_xc(1)%nxc == 0 ) return
+ write(stdout,*) 'CMK dft routine 2'
 
+ if( dft_xc(1)%nxc == 0 ) return
+ write(stdout,*) 'CMK dft routine 3'
  !
  ! Switch the timers: complex wavefunctions imply RT-TDDFT run
  select type(c_matrix)
@@ -1041,7 +1042,7 @@ subroutine dft_exc_vxc_batch(batch_size,basis,occupation,c_matrix,vxc_ao,exc_xc,
  class default
    call die("dft_exc_vxc_batch: c_matrix is neither real nor complex")
  end select
-
+ write(stdout,*) 'CMK dft routine 4'
  call start_clock(timing_xxdft_xc)
 
  nstate = SIZE(occupation,DIM=1)
