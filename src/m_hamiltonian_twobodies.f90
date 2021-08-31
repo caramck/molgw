@@ -997,8 +997,8 @@ subroutine dft_exc_vxc_batch(batch_size,basis,occupation,c_matrix,vxc_ao,exc_xc)
  real(dp),allocatable :: weight_batch(:)
  real(dp),allocatable :: tmp_batch(:,:)
  !Begin CMK
- !real(dp),allocatable :: exc_ao_batch(:)
- !real(dp),allocatable :: tmp_exc_batch(:,:)
+ real(dp),allocatable :: exc_ao_batch(:)
+ real(dp),allocatable :: tmp_exc_batch(:,:)
  !End CMK
  real(dp),allocatable :: basis_function_r_batch(:,:)
  real(dp),allocatable :: bf_gradx_batch(:,:)
@@ -1019,7 +1019,7 @@ subroutine dft_exc_vxc_batch(batch_size,basis,occupation,c_matrix,vxc_ao,exc_xc)
  exc_xc = 0.0_dp
  vxc_ao(:,:,:) = 0.0_dp
  !Begin CMK
- !exc_ao(:,:,:) = 0.0_dp
+ exc_ao(:,:,:) = 0.0_dp
  !End CMK
 
  write(stdout,*) 'CMK dft routine 2'
@@ -1239,8 +1239,8 @@ subroutine dft_exc_vxc_batch(batch_size,basis,occupation,c_matrix,vxc_ao,exc_xc)
      !Create e_xc matrix in ao basis
      
      !initialize matrices
-     !exc_ao_batch(:) = 0.0_dp
-     !tmp_exc_batch(:,:) = 0.0_dp
+     exc_ao_batch(:) = 0.0_dp
+     tmp_exc_batch(:,:) = 0.0_dp
 
       ! Create temporary exc matrix that updates with batch
      !exc_ao_batch(:) = exc_ao_batch(:) + weight_batch(:) * exc_batch(:) * SUM(rhor_batch(:,:),DIM=1) * dft_xc(ixc)%coeff
