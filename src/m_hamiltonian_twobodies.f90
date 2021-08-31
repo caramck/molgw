@@ -1246,12 +1246,13 @@ subroutine dft_exc_vxc_batch(batch_size,basis,occupation,c_matrix,vxc_ao,exc_xc,
      exc_ao_batch(:) = exc_ao_batch(:) + weight_batch(:) * exc_batch(:) * SUM(rhor_batch(:,:),DIM=1) * dft_xc(ixc)%coeff
      
       !!debug
-      print *," CMK tmp_exc_batch size =",size(tmp_exc_batch)
+      print *," CMK tmp_exc_batch size =",size(exc_ao_batch)
       print *," CMK weight_batch size =",size(weight_batch)
+      print *," CMK basis_function_r_batch size =",size(basis_function_r_batch)
       !!
       ! Send exc matrix to ao basis representation
      do ir=1,nr
-        tmp_exc_batch(:,ir) = SQRT( MAX(exc_ao_batch(ir),1.1e-15_dp) ) * basis_function_r_batch(:,ir)
+        tmp_exc_batch(:,ir) = exc_ao_batch(ir) * basis_function_r_batch(:,ir)
      enddo
 
      !Get an nbf x nbf matrix
