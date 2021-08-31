@@ -1019,7 +1019,7 @@ subroutine dft_exc_vxc_batch(batch_size,basis,occupation,c_matrix,vxc_ao,exc_xc,
  exc_xc = 0.0_dp
  vxc_ao(:,:,:) = 0.0_dp
  !Begin CMK
- !exc_ao(:,:,:) = 0.0_dp
+ exc_ao(:,:,:) = 0.0_dp
  !End CMK
 
  write(stdout,*) 'CMK dft routine 2'

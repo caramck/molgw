@@ -161,7 +161,7 @@ subroutine scf_loop(is_restart,&
    ! hamiltonian_xc is used as a temporary matrix
    if( calc_type%is_dft ) then
      print *, "above dft_exc batch calc"
-     call dft_exc_vxc_batch(BATCH_SIZE,basis,occupation,c_matrix,hamiltonian_xc,en_gks%xc)
+     call dft_exc_vxc_batch(BATCH_SIZE,basis,occupation,c_matrix,hamiltonian_xc,en_gks%xc,exc_ao=exc_ao)
      ! Begin CMK
      !!!!debug
      !print *, 'normal exchange expectation'
