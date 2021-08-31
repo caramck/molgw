@@ -974,7 +974,7 @@ end subroutine setup_exchange_ri_cmplx
 ! Calculate the exchange-correlation potential and energy
 ! * subroutine works for both real and complex wavefunctions c_matrix
 !   using "class" syntax of Fortran2003
-subroutine dft_exc_vxc_batch(batch_size,basis,occupation,c_matrix,vxc_ao,exc_xc)
+subroutine dft_exc_vxc_batch(batch_size,basis,occupation,c_matrix,vxc_ao,exc_xc,exc_ao)
  implicit none
 
  integer,intent(in)             :: batch_size
@@ -984,7 +984,7 @@ subroutine dft_exc_vxc_batch(batch_size,basis,occupation,c_matrix,vxc_ao,exc_xc)
  real(dp),intent(out)           :: vxc_ao(:,:,:)
  real(dp),intent(out)           :: exc_xc
  !begin CMK
- !real(dp),intent(out),optional  :: exc_ao(:,:,:)
+ real(dp),intent(out),optional  :: exc_ao(:,:,:)
  !end CMK
 !=====
  real(dp),parameter   :: TOL_RHO=1.0e-9_dp
