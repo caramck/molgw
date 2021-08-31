@@ -1239,11 +1239,11 @@ subroutine dft_exc_vxc_batch(batch_size,basis,occupation,c_matrix,vxc_ao,exc_xc,
      !Create e_xc matrix in ao basis
      
      !initialize matrices
-     !exc_ao_batch(:) = 0.0_dp
-     !tmp_exc_batch(:,:) = 0.0_dp
+     exc_ao_batch(:) = 0.0_dp
+     tmp_exc_batch(:,:) = 0.0_dp
 
       ! Create temporary exc matrix that updates with batch
-     !exc_ao_batch(:) = exc_ao_batch(:) + weight_batch(:) * exc_batch(:) * SUM(rhor_batch(:,:),DIM=1) * dft_xc(ixc)%coeff
+     exc_ao_batch(:) = exc_ao_batch(:) + weight_batch(:) * exc_batch(:) * SUM(rhor_batch(:,:),DIM=1) * dft_xc(ixc)%coeff
      
       ! Send exc matrix to ao basis representation
      !do ir=1,nr
