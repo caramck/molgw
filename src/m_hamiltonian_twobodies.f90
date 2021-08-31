@@ -1253,8 +1253,8 @@ subroutine dft_exc_vxc_batch(batch_size,basis,occupation,c_matrix,vxc_ao,exc_xc)
      !Get an nbf x nbf matrix
      !call DSYRK('L','N',basis%nbf,nr,-1.0d0,tmp_exc_batch,basis%nbf,1.0d0,exc_ao(:,:,ispin),basis%nbf)
 
-     deallocate(tmp_exc_batch)
-     deallocate(exc_ao_batch)
+     !deallocate(tmp_exc_batch)
+     !deallocate(exc_ao_batch)
 
      !End CMK
 
