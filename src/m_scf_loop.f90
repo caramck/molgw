@@ -69,9 +69,9 @@ subroutine scf_loop(is_restart,&
  real(dp),allocatable    :: hamiltonian_xc(:,:,:)
  real(dp),allocatable    :: matrix_tmp(:,:,:)
  ! Begin CMK
- real(dp),allocatable    :: hamiltonian_exx_beta(:,:,:)
- real(dp),allocatable    :: hamiltonian_exx_alpha(:,:,:)
- real(dp),allocatable    :: exc_ao(:,:,:)
+ !real(dp),allocatable    :: hamiltonian_exx_beta(:,:,:)
+ !real(dp),allocatable    :: hamiltonian_exx_alpha(:,:,:)
+ !real(dp),allocatable    :: exc_ao(:,:,:)
  ! End CMK
 !=====
 
@@ -92,13 +92,13 @@ subroutine scf_loop(is_restart,&
  call clean_allocate('XC operator Vxc',hamiltonian_xc,basis%nbf,basis%nbf,nspin)
  call clean_allocate('Density matrix P',p_matrix,basis%nbf,basis%nbf,nspin)
  !Begin CMK
- call clean_allocate('Alpha component exchange K',hamiltonian_exx_alpha,basis%nbf,basis%nbf,nspin)
- call clean_allocate('Beta component exchange K',hamiltonian_exx_beta,basis%nbf,basis%nbf,nspin)
+ !call clean_allocate('Alpha component exchange K',hamiltonian_exx_alpha,basis%nbf,basis%nbf,nspin)
+ !call clean_allocate('Beta component exchange K',hamiltonian_exx_beta,basis%nbf,basis%nbf,nspin)
  !End CMK
- hamiltonian_exx(:,:,:) = 0.0_dp
+ !hamiltonian_exx(:,:,:) = 0.0_dp
  ! Begin CMK
- hamiltonian_exx_alpha(:,:,:) = 0.0_dp
- hamiltonian_exx_beta(:,:,:) = 0.0_dp
+ !hamiltonian_exx_alpha(:,:,:) = 0.0_dp
+ !hamiltonian_exx_beta(:,:,:) = 0.0_dp
  ! End CMK
 
  !
@@ -179,7 +179,7 @@ subroutine scf_loop(is_restart,&
 
      ! Begin CMK
      ! Catch hamiltonian_exx matrix with lr erf contribution
-     hamiltonian_exx_beta(:,:,:) = hamiltonian_exx(:,:,:) * beta_hybrid
+     !hamiltonian_exx_beta(:,:,:) = hamiltonian_exx(:,:,:) * beta_hybrid
      ! End CMK
    endif
 
@@ -195,7 +195,7 @@ subroutine scf_loop(is_restart,&
 
      ! Begin CMK
      ! Catch hamiltonian_exx matrix with ex contribution
-     hamiltonian_exx_alpha(:,:,:) = hamiltonian_exx(:,:,:) * alpha_hybrid
+     !hamiltonian_exx_alpha(:,:,:) = hamiltonian_exx(:,:,:) * alpha_hybrid
      ! End CMK
    endif
 
@@ -367,7 +367,7 @@ subroutine scf_loop(is_restart,&
 
    ! Begin CMK
    ! Print the expectation values for each component involving exchange (alphaK, betaK, vxc)
-   call print_exchange_expectations(basis,c_matrix,occupation,exc_ao)
+   !call print_exchange_expectations(basis,c_matrix,occupation,exc_ao)
    ! End CMK
 
  endif
@@ -402,8 +402,8 @@ subroutine scf_loop(is_restart,&
  call clean_deallocate('Exchange operator Sigx',hamiltonian_exx)
  call clean_deallocate('XC operator Vxc',hamiltonian_xc)
  !Begin CMK
- call clean_deallocate('Alpha exchange hexx_alpha',hamiltonian_exx_alpha)
- call clean_deallocate('Beta exchange hexx_beta',hamiltonian_exx_beta)
+ !call clean_deallocate('Alpha exchange hexx_alpha',hamiltonian_exx_alpha)
+ !call clean_deallocate('Beta exchange hexx_beta',hamiltonian_exx_beta)
  !End CMK
 
 
