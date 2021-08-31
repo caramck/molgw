@@ -1015,6 +1015,8 @@ subroutine dft_exc_vxc_batch(batch_size,basis,occupation,c_matrix,vxc_ao,exc_xc,
  real(C_DOUBLE),allocatable :: vsigma_batch(:,:)
 !=====
 
+ write(stdout,*) 'CMK in dft xc potential routine'
+
  exc_xc = 0.0_dp
  vxc_ao(:,:,:) = 0.0_dp
  !Begin CMK
