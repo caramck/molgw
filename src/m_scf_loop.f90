@@ -71,7 +71,7 @@ subroutine scf_loop(is_restart,&
  ! Begin CMK
  !real(dp),allocatable    :: hamiltonian_exx_beta(:,:,:)
  !real(dp),allocatable    :: hamiltonian_exx_alpha(:,:,:)
- !real(dp),allocatable    :: exc_ao(:,:,:)
+ real(dp),allocatable    :: exc_ao(:,:,:)
  ! End CMK
 !=====
 
@@ -151,7 +151,7 @@ subroutine scf_loop(is_restart,&
    !
    hamiltonian_xc(:,:,:) = 0.0_dp
    !Begin CMK
-   !exc_ao(:,:,:) = 0.0_dp
+   exc_ao(:,:,:) = 0.0_dp
    !End CMK
    en_gks%exx_hyb = 0.0_dp
 
