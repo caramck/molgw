@@ -1064,6 +1064,10 @@ subroutine dft_exc_vxc_batch(batch_size,basis,occupation,c_matrix,vxc_ao,exc_xc,
 
    call start_clock(timing_xxdft_densities)
 
+   !Begin CMK
+   allocate(exc_ao_batch(nr))
+   allocate(tmp_exc_batch(basis%nbf,nr))
+   !End CMK
    allocate(weight_batch(nr))
    allocate(rhor_batch(nspin,nr))
    allocate(basis_function_r_batch(basis%nbf,nr))
