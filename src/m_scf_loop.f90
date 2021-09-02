@@ -164,8 +164,8 @@ subroutine scf_loop(is_restart,&
      call dft_exc_vxc_batch(BATCH_SIZE,basis,occupation,c_matrix,hamiltonian_xc,en_gks%xc,exc_ao=exc_ao)
      ! Begin CMK
      !!!!debug
-     !print *, 'normal exchange expectation'
-     !call print_exchange_expectations(basis,c_matrix,occupation,exc_ao)
+     print *, 'normal exchange expectation'
+     call print_exchange_expectations(basis,c_matrix,occupation,exc_ao)
      !!!!end_debug
      ! End CMK
    endif
