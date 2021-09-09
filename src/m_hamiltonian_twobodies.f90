@@ -1248,14 +1248,6 @@ subroutine dft_exc_vxc_batch(batch_size,basis,occupation,c_matrix,vxc_ao,exc_xc,
 
       ! Create temporary exc matrix that updates with batch
      exc_ao_batch(:) = exc_ao_batch(:) + weight_batch(:) * exc_batch(:) * SUM(rhor_batch(:,:),DIM=1) * dft_xc(ixc)%coeff
-     
-      !!debug
-      !print *," CMK exc_ao_batch size =",size(exc_ao_batch)
-      !print *," CMK rhor-batch size =",size(rhor_batch)
-      !print *," CMK dft_xc(ixc)%coeff =",dft_xc(ixc)%coeff
-      !!print *," CMK exc_batch size =",size(exc_batch)
-      !print *," CMK weight_batch size =",size(weight_batch)
-      !print *," CMK basis_function_r_batch shape =",shape(basis_function_r_batch)
       
       !!
       ! Send exc matrix to ao basis representation: nbf x ir
