@@ -547,6 +547,12 @@ subroutine print_expectations(basis,c_matrix,hkin)
  allocate(ekin(nstate,nspin))
 
  call matrix_ao_to_mo_diag(c_matrix,RESHAPE(hkin,(/nbf,nbf,1/)),ekin)
+ !Begin CMK
+ ! Print out each expectation value to output file
+ call dump_out_energy('=== Kinetic component of exchange expectation value ===',occupation,ekin)
+ ! File each expectation value to the yaml
+ call dump_out_energy_yaml('Kinetic component of exchange expectation value',ekin,1,nstate)
+ !End CMK
 
 
  if( print_yaml_ .AND. is_iomaster ) then
