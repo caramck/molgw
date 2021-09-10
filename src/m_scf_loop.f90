@@ -608,7 +608,7 @@ subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx
   real(dp),intent(in)        :: vxc_ao(:,:,:)
  !=====
   integer                 :: restart_type
-  integer                 :: nstate,nocc,istate,ispin
+  integer                 :: nstate,nbf,nocc,istate,ispin
   real(dp),allocatable    :: c_matrix_restart(:,:,:)
   real(dp),allocatable    :: i_matrix(:,:,:)
   real(dp),allocatable    :: h_ii(:,:)
@@ -674,7 +674,7 @@ subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx
     real(dp),intent(in)        :: hamiltonian_kinetic(:,:)
    !=====
     integer                 :: restart_type
-    integer                 :: nstate,nocc,istate,ispin
+    integer                 :: nstate,nbf, nocc,istate,ispin
     real(dp),allocatable    :: c_matrix_restart(:,:,:)
     real(dp),allocatable    :: i_matrix(:,:,:)
     real(dp),allocatable    :: h_ii(:,:)
