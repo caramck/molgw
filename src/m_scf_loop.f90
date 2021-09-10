@@ -372,7 +372,7 @@ subroutine scf_loop(is_restart,&
    ! Begin CMK
    ! Print the expectation values for each component involving exchange (alphaK, betaK, vxc)
    call print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx_alpha,hamiltonian_exx_beta,vxc_ao)
-   call print_nucleus_expectations(basis,c_matrix,occupation,hamiltonian_nucleus)
+   call print_nucleus_kinetic_expectations(basis,c_matrix,occupation,hamiltonian_nucleus,hamiltonian_kinetic)
    ! End CMK
 
  endif
@@ -547,12 +547,6 @@ subroutine print_expectations(basis,c_matrix,hkin)
  allocate(ekin(nstate,nspin))
 
  call matrix_ao_to_mo_diag(c_matrix,RESHAPE(hkin,(/nbf,nbf,1/)),ekin)
- !Begin CMK
- ! Print out each expectation value to output file
- call dump_out_energy('=== Kinetic component of exchange expectation value ===',occupation,ekin)
- ! File each expectation value to the yaml
- call dump_out_energy_yaml('Kinetic component of exchange expectation value',ekin,1,nstate)
- !End CMK
 
 
  if( print_yaml_ .AND. is_iomaster ) then
@@ -671,7 +665,7 @@ subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx
 
 !=========================================================================
 ! Print out the v_nucleus expectation
-  subroutine print_nucleus_expectations(basis,c_matrix,occupation,hamiltonian_nucleus)
+  subroutine print_nucleus_kinetic_expectations(basis,c_matrix,occupation,hamiltonian_nucleus,hamiltonian_kinetic)
 
     implicit none
 
@@ -679,6 +673,7 @@ subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx
     real(dp),intent(in)        :: c_matrix(:,:,:)
     real(dp),intent(in)        :: occupation(:,:)
     real(dp),intent(in)        :: hamiltonian_nucleus(:,:)
+    real(dp),intent(in)        :: hamiltonian_kinetic(:,:)
    !=====
     integer                 :: restart_type
     integer                 :: nstate,nbf, nocc,istate,ispin
@@ -715,6 +710,16 @@ subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx
     call dump_out_energy('=== Ionic component of exchange expectation value ===',occupation,h_ii)
     ! File each expectation value to the yaml
     call dump_out_energy_yaml('Ionic component of exchange expectation value',h_ii,1,nstate)
+
+    ! Clear h_ii matrix
+    h_ii(:,:) = 0.0_dp
+
+    ! Contract each matrix in AO basis to MO and diagonalize
+    call matrix_ao_to_mo_diag(c_matrix_restart,RESHAPE(hamiltonian_kinetic,(/nbf,nbf,1/)),h_ii)
+    ! Print out each expectation value to output file
+    call dump_out_energy('=== Kinetic component of exchange expectation value ===',occupation,h_ii)
+    ! File each expectation value to the yaml
+    call dump_out_energy_yaml('Kinetuc component of exchange expectation value',h_ii,1,nstate)
   
   
     ! deallocate non-output matrices
@@ -722,7 +727,7 @@ subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx
     deallocate(energy_restart,occupation_restart)
     call clean_deallocate('RESTART: C',c_matrix_restart)
 
-  end subroutine print_nucleus_expectations
+  end subroutine print_nucleus_kinetic_expectations
 
 
 ! End CMK
