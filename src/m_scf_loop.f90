@@ -664,14 +664,14 @@ subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx
 
 !=========================================================================
 ! Print out the v_nucleus expectation
-  subroutine print_nucleus_expectations(basis,c_matrix,occupation,hamiltonian_nucleus)
+  subroutine print_nucleus_expectations(basis,c_matrix,occupation,hamiltonian_kinetic)
 
     implicit none
 
     type(basis_set),intent(in) :: basis
     real(dp),intent(in)        :: c_matrix(:,:,:)
     real(dp),intent(in)        :: occupation(:,:)
-    real(dp),intent(in)        :: hamiltonian_nucleus(:,:)
+    real(dp),intent(in)        :: hamiltonian_kinetic(:,:)
    !=====
     integer                 :: restart_type
     integer                 :: nstate,nocc,istate,ispin
@@ -703,7 +703,7 @@ subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx
     endif
   
     ! Contract each matrix in AO basis to MO and diagonalize
-    call matrix_ao_to_mo_diag(c_matrix_restart,RESHAPE(hamiltonian_nucleus,(/nbf,nbf,1/)),h_ii)
+    call matrix_ao_to_mo_diag(c_matrix_restart,RESHAPE(hamiltonian_kinetic,(/nbf,nbf,1/)),h_ii)
     ! Print out each expectation value to output file
     call dump_out_energy('=== Ionic component of exchange expectation value ===',occupation,h_ii)
     ! File each expectation value to the yaml
