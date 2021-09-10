@@ -371,7 +371,7 @@ subroutine scf_loop(is_restart,&
    ! Begin CMK
    ! Print the expectation values for each component involving exchange (alphaK, betaK, vxc)
    call print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx_alpha,hamiltonian_exx_beta,vxc_ao)
-   !call print_nucleus_expectations(basis,c_matrix,hamiltonian_nucleus)
+   call print_nucleus_expectations(basis,c_matrix,hamiltonian_nucleus)
    ! End CMK
 
  endif
