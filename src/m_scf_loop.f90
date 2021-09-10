@@ -711,9 +711,6 @@ subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx
     ! File each expectation value to the yaml
     call dump_out_energy_yaml('Ionic component of exchange expectation value',h_ii,1,nstate)
 
-    ! Clear h_ii matrix
-    h_ii(:,:) = 0.0_dp
-
     ! Contract each matrix in AO basis to MO and diagonalize
     call matrix_ao_to_mo_diag(c_matrix_restart,RESHAPE(hamiltonian_kinetic,(/nbf,nbf,1/)),h_ii)
     ! Print out each expectation value to output file
