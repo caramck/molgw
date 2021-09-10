@@ -371,7 +371,7 @@ subroutine scf_loop(is_restart,&
    ! Begin CMK
    ! Print the expectation values for each component involving exchange (alphaK, betaK, vxc)
    call print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx_alpha,hamiltonian_exx_beta,vxc_ao)
-   call print_nucleus_expectations(basis,c_matrix,occupation,hamiltonian_nucleus)
+   call print_nucleus_expectations(basis,c_matrix,hamiltonian_nucleus)
    ! End CMK
 
  endif
@@ -665,54 +665,55 @@ subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx
 ! Print out the v_nucleus expectation
   subroutine print_nucleus_expectations(basis,c_matrix,occupation,hamiltonian_nucleus)
 
-  implicit none
+    implicit none
 
-  type(basis_set),intent(in) :: basis
-  real(dp),intent(in)        :: c_matrix(:,:,:)
-  real(dp),intent(in)        :: occupation(:,:)
-  real(dp),intent(in)        :: hamiltonian_nucleus(:,:)
- !=====
-  integer                 :: restart_type
-  integer                 :: nstate,nocc,istate,ispin
-  real(dp),allocatable    :: c_matrix_restart(:,:,:)
-  real(dp),allocatable    :: i_matrix(:,:,:)
-  real(dp),allocatable    :: h_ii(:,:)
-  real(dp),allocatable    :: energy_restart(:,:),occupation_restart(:,:)
- !=====
+    type(basis_set),intent(in) :: basis
+    real(dp),intent(in)        :: c_matrix(:,:,:)
+    real(dp),intent(in)        :: occupation(:,:)
+    real(dp),intent(in)        :: hamiltonian_nucleus(:,:)
+   !=====
+    integer                 :: restart_type
+    integer                 :: nstate,nocc,istate,ispin
+    real(dp),allocatable    :: c_matrix_restart(:,:,:)
+    real(dp),allocatable    :: i_matrix(:,:,:)
+    real(dp),allocatable    :: h_ii(:,:)
+    real(dp),allocatable    :: energy_restart(:,:),occupation_restart(:,:)
+   !=====
+  
+    nstate = SIZE(c_matrix,DIM=2)
+    nocc   = get_number_occupied_states(occupation)
+    ! Clear h_ii matrix
+    h_ii(:,:) = 0.0_dp
+  
+    !Read RESTART
+    call clean_allocate('RESTART: C',c_matrix_restart,basis%nbf,nstate,nspin)
+    allocate(energy_restart(nstate,nspin))
+    allocate(occupation_restart(nstate,nspin))
+    allocate(h_ii(nstate,nspin))
+   
+    call read_restart(restart_type,'RESTART_TEST',basis,occupation_restart,c_matrix_restart,energy_restart)
+   
+    !If no RESTART file
+    if( restart_type == NO_RESTART ) then
+      c_matrix_restart(:,:,:) = c_matrix(:,:,:)
+    else
+      write(stdout,'(1x,a,a)') 'RESTART file read: ','RESTART_TEST'
+    endif
+  
+    ! Contract each matrix in AO basis to MO and diagonalize
+    call matrix_ao_to_mo_diag(c_matrix_restart,RESHAPE(hamiltonian_nucleus,(/basis%nbf,basis%nbf,1/)),h_ii)
+    ! Print out each expectation value to output file
+    call dump_out_energy('=== Ionic component of exchange expectation value ===',occupation,h_ii)
+    ! File each expectation value to the yaml
+    call dump_out_energy_yaml('Ionic component of exchange expectation value',h_ii,1,nstate)
+  
+  
+    ! deallocate non-output matrices
+    deallocate(h_ii)
+    deallocate(energy_restart,occupation_restart)
+    call clean_deallocate('RESTART: C',c_matrix_restart)
 
-  nstate = SIZE(c_matrix,DIM=2)
-  nocc   = get_number_occupied_states(occupation)
-  ! Clear h_ii matrix
-  h_ii(:,:) = 0.0_dp
-
-  !Read RESTART
-  call clean_allocate('RESTART: C',c_matrix_restart,basis%nbf,nstate,nspin)
-  allocate(energy_restart(nstate,nspin))
-  allocate(occupation_restart(nstate,nspin))
-  allocate(h_ii(nstate,nspin))
- 
-  call read_restart(restart_type,'RESTART_TEST',basis,occupation_restart,c_matrix_restart,energy_restart)
- 
-  !If no RESTART file
-  if( restart_type == NO_RESTART ) then
-    c_matrix_restart(:,:,:) = c_matrix(:,:,:)
-  else
-    write(stdout,'(1x,a,a)') 'RESTART file read: ','RESTART_TEST'
-  endif
-
-  ! Repeat contraction and print for hamiltonian_xc matrix
-  call matrix_ao_to_mo_diag(c_matrix_restart,hamiltonian_nucleus,h_ii)
-  call dump_out_energy('=== Ion potential expectation value ===',occupation,h_ii)
-  call dump_out_energy_yaml('Ion potential expectation value',h_ii,1,nstate)
-
-
-  ! deallocate non-output matrices
-  deallocate(h_ii)
-  deallocate(energy_restart,occupation_restart)
-  call clean_deallocate('RESTART: C',c_matrix_restart)
-
- end subroutine print_nucleus_expectations
- 
+  end subroutine print_nucleus_expectations
 
 
 ! End CMK
