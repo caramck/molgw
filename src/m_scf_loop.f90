@@ -300,7 +300,6 @@ subroutine scf_loop(is_restart,&
    call dump_out_energy('=== CMK hamiltonian total energy ===',occupation,energy)
 
 
-
    !
    ! When level_shifting is used, the unoccupied state energies have to be brought
    ! back to their original value,
