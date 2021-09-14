@@ -291,6 +291,9 @@ subroutine scf_loop(is_restart,&
    !!!CMK debug
    call diagonalize_hamiltonian_scalapack(hamiltonian_xc,x_matrix,energy,c_matrix)
    call dump_out_energy('=== CMK hamiltonian_xc energy ===',occupation,energy)
+
+   call diagonalize_hamiltonian_scalapack(vxc_ao,x_matrix,energy,c_matrix)
+   call dump_out_energy('=== CMK vxc_ao energy ===',occupation,energy)
   
    !!!End CMK
    call diagonalize_hamiltonian_scalapack(hamiltonian,x_matrix,energy,c_matrix)
