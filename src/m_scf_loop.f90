@@ -289,13 +289,13 @@ subroutine scf_loop(is_restart,&
    ! save the old eigenvalues
    ! This subroutine works with or without scalapack
    !!!CMK debug
-   call diagonalize_hamiltonaian_scalapack(hamiltonian_xc,x_matrix,energy,c_matrix)
+   call diagonalize_hamiltonian_scalapack(hamiltonian_xc,x_matrix,energy,c_matrix)
    call dump_out_energy('=== CMK hamiltonian_xc energy ===',occupation,energy)
-   call diagonalize_hamiltonaian_scalapack(hamiltonian_kinetic,x_matrix,energy,c_matrix)
+   call diagonalize_hamiltonian_scalapack(hamiltonian_kinetic,x_matrix,energy,c_matrix)
    call dump_out_energy('=== CMK hamiltonian_kinetic energy ===',occupation,energy)
-   call diagonalize_hamiltonaian_scalapack(hamiltonian_nucleus,x_matrix,energy,c_matrix)
+   call diagonalize_hamiltonian_scalapack(hamiltonian_nucleus,x_matrix,energy,c_matrix)
    call dump_out_energy('=== CMK hamiltonian_nucleus energy ===',occupation,energy)
-   call diagonalize_hamiltonaian_scalapack(hamiltonian_hartree,x_matrix,energy,c_matrix)
+   call diagonalize_hamiltonian_scalapack(hamiltonian_hartree,x_matrix,energy,c_matrix)
    call dump_out_energy('=== CMK hamiltonian_hartree energy ===',occupation,energy)
    !!!End CMK
    call diagonalize_hamiltonian_scalapack(hamiltonian,x_matrix,energy,c_matrix)
