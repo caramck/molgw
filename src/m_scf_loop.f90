@@ -288,16 +288,7 @@ subroutine scf_loop(is_restart,&
    ! H \varphi = E S \varphi
    ! save the old eigenvalues
    ! This subroutine works with or without scalapack
-   !!!CMK debug
-   call diagonalize_hamiltonian_scalapack(hamiltonian_xc,x_matrix,energy,c_matrix)
-   call dump_out_energy('=== CMK hamiltonian_xc energy ===',occupation,energy)
-
-   call diagonalize_hamiltonian_scalapack(vxc_ao,x_matrix,energy,c_matrix)
-   call dump_out_energy('=== CMK vxc_ao energy ===',occupation,energy)
-  
-   !!!End CMK
    call diagonalize_hamiltonian_scalapack(hamiltonian,x_matrix,energy,c_matrix)
-   call dump_out_energy('=== CMK hamiltonian total energy ===',occupation,energy)
 
 
    !
@@ -381,7 +372,7 @@ subroutine scf_loop(is_restart,&
 
    ! Begin CMK
    ! Print the expectation values for each component involving exchange (alphaK, betaK, vxc)
-   call print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx_alpha,hamiltonian_exx_beta,vxc_ao)
+   call print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx_alpha,hamiltonian_exx_beta,hamiltonian)
    call print_nucleus_kinetic_expectations(basis,c_matrix,occupation,hamiltonian_nucleus,hamiltonian_kinetic)
    ! End CMK
 
@@ -661,8 +652,8 @@ subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx
 
   ! Repeat contraction and print for hamiltonian_xc matrix
   call matrix_ao_to_mo_diag(c_matrix_restart,vxc_ao,h_ii)
-  call dump_out_energy('=== XC potential expectation value ===',occupation,h_ii)
-  call dump_out_energy_yaml('XC potential expectation value',h_ii,1,nstate)
+  call dump_out_energy('=== Hamiltonian potential expectation value ===',occupation,h_ii)
+  call dump_out_energy_yaml('Hamiltonian potential expectation value',h_ii,1,nstate)
 
 
   ! deallocate non-output matrices
