@@ -708,16 +708,16 @@ subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx
     ! Contract each matrix in AO basis to MO and diagonalize
     call matrix_ao_to_mo_diag(c_matrix_restart,RESHAPE(hamiltonian_nucleus,(/nbf,nbf,1/)),h_ii)
     ! Print out each expectation value to output file
-    call dump_out_energy('=== nucleus component expectation value ===',occupation,2*h_ii)
+    call dump_out_energy('=== nucleus component expectation value ===',occupation,h_ii)
     ! File each expectation value to the yaml
-    call dump_out_energy_yaml('nucleus component expectation value',2*h_ii,1,nstate)
+    call dump_out_energy_yaml('nucleus component expectation value',h_ii,1,nstate)
 
     ! Contract each matrix in AO basis to MO and diagonalize
     call matrix_ao_to_mo_diag(c_matrix_restart,RESHAPE(hamiltonian_kinetic,(/nbf,nbf,1/)),h_ii)
     ! Print out each expectation value to output file
-    call dump_out_energy('=== Kinetic component expectation value ===',occupation,2*h_ii)
+    call dump_out_energy('=== Kinetic component expectation value ===',occupation,h_ii)
     ! File each expectation value to the yaml
-    call dump_out_energy_yaml('Kinetic component expectation value',2*h_ii,1,nstate)
+    call dump_out_energy_yaml('Kinetic component expectation value',h_ii,1,nstate)
   
   
     ! deallocate non-output matrices
