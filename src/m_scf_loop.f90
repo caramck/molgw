@@ -372,7 +372,7 @@ subroutine scf_loop(is_restart,&
 
    ! Begin CMK
    ! Print the expectation values for each component involving exchange (alphaK, betaK, vxc)
-   call print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx_alpha,hamiltonian_exx_beta,hamiltonian)
+   call print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx_alpha,hamiltonian_exx_beta,hamiltonian_xc)
    call print_nucleus_kinetic_expectations(basis,c_matrix,occupation,hamiltonian_nucleus,hamiltonian_kinetic)
    ! End CMK
 
@@ -652,8 +652,8 @@ subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx
 
   ! Repeat contraction and print for hamiltonian_xc matrix
   call matrix_ao_to_mo_diag(c_matrix_restart,vxc_ao,h_ii)
-  call dump_out_energy('=== Hamiltonian potential expectation value ===',occupation,h_ii)
-  call dump_out_energy_yaml('Hamiltonian potential expectation value',h_ii,1,nstate)
+  call dump_out_energy('=== Hamiltonian_xc  expectation value ===',occupation,h_ii)
+  call dump_out_energy_yaml('Hamiltonian_xc potential expectation value',h_ii,1,nstate)
 
 
   ! deallocate non-output matrices
@@ -708,16 +708,16 @@ subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx
     ! Contract each matrix in AO basis to MO and diagonalize
     call matrix_ao_to_mo_diag(c_matrix_restart,RESHAPE(hamiltonian_nucleus,(/nbf,nbf,1/)),h_ii)
     ! Print out each expectation value to output file
-    call dump_out_energy('=== Ionic component of exchange expectation value ===',occupation,2*h_ii)
+    call dump_out_energy('=== nucleus component expectation value ===',occupation,2*h_ii)
     ! File each expectation value to the yaml
-    call dump_out_energy_yaml('Ionic component of exchange expectation value',2*h_ii,1,nstate)
+    call dump_out_energy_yaml('nucleus component expectation value',2*h_ii,1,nstate)
 
     ! Contract each matrix in AO basis to MO and diagonalize
     call matrix_ao_to_mo_diag(c_matrix_restart,RESHAPE(hamiltonian_kinetic,(/nbf,nbf,1/)),h_ii)
     ! Print out each expectation value to output file
-    call dump_out_energy('=== Kinetic component of exchange expectation value ===',occupation,2*h_ii)
+    call dump_out_energy('=== Kinetic component expectation value ===',occupation,2*h_ii)
     ! File each expectation value to the yaml
-    call dump_out_energy_yaml('Kinetuc component of exchange expectation value',2*h_ii,1,nstate)
+    call dump_out_energy_yaml('Kinetic component expectation value',2*h_ii,1,nstate)
   
   
     ! deallocate non-output matrices
