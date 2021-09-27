@@ -634,7 +634,6 @@ subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx
   real(dp),allocatable    :: i_matrix(:,:,:)
   real(dp),allocatable    :: h_ii(:,:)
   real(dp),allocatable    :: energy_restart(:,:),occupation_restart(:,:)
-  real(dp),allocatable    :: debug_matrix:,:,:)
  !=====
 
   nstate = SIZE(c_matrix,DIM=2)
