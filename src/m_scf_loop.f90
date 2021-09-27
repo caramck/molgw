@@ -73,6 +73,9 @@ subroutine scf_loop(is_restart,&
  real(dp),allocatable    :: hamiltonian_exx_alpha(:,:,:)
  real(dp),allocatable    :: exc_ao(:,:,:)
  real(dp),allocatable    :: vxc_ao(:,:,:)
+ !!!debug
+ real(dp),allocatable    :: hamiltonian_test_vxc(:,:,:)
+ !!!end debug
  ! End CMK
 !=====
 
@@ -97,6 +100,10 @@ subroutine scf_loop(is_restart,&
  call clean_allocate('Beta component exchange K',hamiltonian_exx_beta,basis%nbf,basis%nbf,nspin)
  call clean_allocate('DFT XC energy', exc_ao, basis%nbf,basis%nbf,nspin)
  call clean_allocate('DFT VXC ', vxc_ao, basis%nbf,basis%nbf,nspin)
+ !!!cmk debug
+ call clean_allocate('text vxc ', hamiltonian_test_vxc, basis%nbf,basis%nbf,nspin)
+ hamiltonian_test_vxc(:,:,:) = 0.0_dp
+ !!!end debug
  !End CMK
  hamiltonian_exx(:,:,:) = 0.0_dp
  ! Begin CMK
@@ -262,6 +269,15 @@ subroutine scf_loop(is_restart,&
    ! Add the XC part of the hamiltonian to the total hamiltonian
    hamiltonian(:,:,:) = hamiltonian(:,:,:) + hamiltonian_xc(:,:,:)
 
+   !!CMK Debug
+   !this should be the same as the vxc_ao matrix
+   hamiltonian_test_vxc(:,:,:) = hamiltonian(:,:,:) - (hamiltonian_exx_alpha(:,:,:) + hamiltonian_exx_beta(:,:,:) )
+   do ispin=1,nspin
+     hamiltonian_test_vxc(:,:,ispin) = hamiltonian_test_vxc(:,:,ispin) - (hamiltonian_hartree(:,:) + hamiltonian_kinetic(:,:) + hamiltonian_nucleus(:,:) )
+   enddo
+
+   !!END Debug
+
    ! All the components of the energy have been calculated at this stage
    ! Sum up to get the total energy
    en_gks%total = en_gks%nuc_nuc + en_gks%kinetic + en_gks%nucleus + en_gks%hartree + en_gks%exx_hyb + en_gks%xc
@@ -373,6 +389,10 @@ subroutine scf_loop(is_restart,&
    ! Print the expectation values for each component involving exchange (alphaK, betaK, vxc)
    call print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx_alpha,hamiltonian_exx_beta,vxc_ao)
    call print_nucleus_kinetic_expectations(basis,c_matrix,occupation,hamiltonian_nucleus,hamiltonian_kinetic)
+
+   ! cmk debug
+   print *,"values below are actually ham_exx_alpha, ham_text_vxc instead of exx_beta, and then vxc_ao"
+   call print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx_alpha,hamiltonian_test_vxc,vxc_ao)
    ! End CMK
 
  endif
@@ -614,6 +634,7 @@ subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx
   real(dp),allocatable    :: i_matrix(:,:,:)
   real(dp),allocatable    :: h_ii(:,:)
   real(dp),allocatable    :: energy_restart(:,:),occupation_restart(:,:)
+  real(dp),allocatable    :: debug_matrix:,:,:)
  !=====
 
   nstate = SIZE(c_matrix,DIM=2)
