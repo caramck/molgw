@@ -271,7 +271,7 @@ subroutine scf_loop(is_restart,&
 
    !!CMK Debug
    !this should be the same as the vxc_ao matrix
-   hamiltonian_test_vxc(:,:,:) = hamiltonian(:,:,:) - (hamiltonian_exx_alpha(:,:,:) + hamiltonian_exx_beta(:,:,:) )
+   hamiltonian_test_vxc(:,:,:) = hamiltonian(:,:,:) - (hamiltonian_exx_alpha(:,:,:) + hamiltonian_exx_beta(:,:,:) + vxc_ao(:,:,:) )
    do ispin=1,nspin
      hamiltonian_test_vxc(:,:,ispin) = hamiltonian_test_vxc(:,:,ispin) - (hamiltonian_hartree(:,:) + hamiltonian_kinetic(:,:) + hamiltonian_nucleus(:,:) )
    enddo
@@ -671,7 +671,7 @@ subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx
 
   ! Repeat contraction and print for hamiltonian_xc matrix
   call matrix_ao_to_mo_diag(c_matrix_restart,vxc_ao,h_ii)
-  call dump_out_energy('=== Hamiltonian_xc  expectation value ===',occupation,h_ii)
+  call dump_out_energy('=== vxc expectation value ===',occupation,h_ii)
   call dump_out_energy_yaml('Hamiltonian_xc potential expectation value',h_ii,1,nstate)
 
 
