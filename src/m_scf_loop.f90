@@ -273,7 +273,7 @@ subroutine scf_loop(is_restart,&
    !this should be the same as the vxc_ao matrix
    hamiltonian_test_vxc(:,:,:) = hamiltonian(:,:,:) - (hamiltonian_exx_alpha(:,:,:) + Hamiltonian_exx_beta(:,:,:) + vxc_ao(:,:,:) ) 
    do ispin=1,nspin
-     hamiltonian_test_vxc(:,:,ispin) = hamiltonian_test_vxc(:,:,ispin) - (hamiltonian_hartree(:,:) + hamiltonian_nucleus(:,:) )
+     hamiltonian_test_vxc(:,:,ispin) = hamiltonian_test_vxc(:,:,ispin) - (hamiltonian_hartree(:,:) + hamiltonian_kinetic(:,:) )
    enddo
 
    !!END Debug
