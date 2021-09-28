@@ -407,7 +407,6 @@ subroutine scf_loop(is_restart,&
  call clean_deallocate('Alpha exchange hexx_alpha',hamiltonian_exx_alpha)
  call clean_deallocate('Beta exchange hexx_beta',hamiltonian_exx_beta)
  call clean_deallocate('vxc_ao ',vxc_ao)
- call clean_deallocate('exc_ao ',exc_ao)
  !End CMK
 
 
