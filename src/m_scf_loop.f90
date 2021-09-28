@@ -271,7 +271,7 @@ subroutine scf_loop(is_restart,&
 
    !!CMK Debug
    !this should be the same as the vxc_ao matrix
-   hamiltonian_test_vxc(:,:,:) = hamiltonian(:,:,:) - (hamiltonian_exx_alpha(:,:,:) + hamiltonian_exx_beta(:,:,:) )
+   hamiltonian_test_vxc(:,:,:) = hamiltonian(:,:,:) - (hamiltonian_exx_alpha(:,:,:) + vxc_ao(:,:,:) ) 
    do ispin=1,nspin
      hamiltonian_test_vxc(:,:,ispin) = hamiltonian_test_vxc(:,:,ispin) - (hamiltonian_hartree(:,:) + hamiltonian_kinetic(:,:) + hamiltonian_nucleus(:,:) )
    enddo
@@ -391,8 +391,8 @@ subroutine scf_loop(is_restart,&
    call print_nucleus_kinetic_expectations(basis,c_matrix,occupation,hamiltonian_nucleus,hamiltonian_kinetic)
 
    ! cmk debug
-   print *,"values below are actually ham_exx_alpha, hamiltonian instead of exx_beta, and then vxc_ao"
-   call print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx_alpha,hamiltonian_test_vxc,vxc_ao)
+   print *,"values below are actually ham_exx_alpha, ham_exx_beta, and then hamiltonian_test_vxc"
+   call print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx_alpha,hamiltonian_exx_beta,hamiltonian_test_vxc)
    ! End CMK
 
  endif
