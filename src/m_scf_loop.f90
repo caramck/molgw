@@ -276,6 +276,9 @@ subroutine scf_loop(is_restart,&
      hamiltonian_test_vxc(:,:,ispin) = hamiltonian_test_vxc(:,:,ispin) - (hamiltonian_hartree(:,:) + hamiltonian_kinetic(:,:) + hamiltonian_nucleus(:,:) )
    enddo
 
+   !! pull out ham energies up here
+   print *,"hamiltonian energies up here"
+
    !!END Debug
 
    ! All the components of the energy have been calculated at this stage
@@ -391,8 +394,8 @@ subroutine scf_loop(is_restart,&
    call print_nucleus_kinetic_expectations(basis,c_matrix,occupation,hamiltonian_nucleus,hamiltonian_kinetic)
 
    ! cmk debug
-   print *,"values below are actually ham_exx_alpha, ham_text_vxc instead of exx_beta, and then vxc_ao"
-   call print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx_alpha,hamiltonian_test_vxc,vxc_ao)
+   print *,"values below are actually ham_exx_alpha, hamiltonian instead of exx_beta, and then vxc_ao"
+   call print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx_alpha,hamiltonian,vxc_ao)
    ! End CMK
 
  endif
