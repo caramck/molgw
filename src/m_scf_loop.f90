@@ -271,9 +271,9 @@ subroutine scf_loop(is_restart,&
 
    !!CMK Debug
    !this should be the same as the vxc_ao matrix
-   hamiltonian_test_vxc(:,:,:) = hamiltonian(:,:,:) - (hamiltonian_exx_alpha(:,:,:) + Hamiltonian_exx_beta(:,:,:) + vxc_ao(:,:,:) ) 
+   hamiltonian_test_vxc(:,:,:) = hamiltonian(:,:,:) - (hamiltonian_exx_beta(:,:,:) + vxc_ao(:,:,:) ) 
    do ispin=1,nspin
-     hamiltonian_test_vxc(:,:,ispin) = hamiltonian_test_vxc(:,:,ispin) - (hamiltonian_hartree(:,:) + hamiltonian_kinetic(:,:) )
+     hamiltonian_test_vxc(:,:,ispin) = hamiltonian_test_vxc(:,:,ispin) - (hamiltonian_hartree(:,:) + hamiltonian_kinetic(:,:) + hamiltonian_nucleus(:,:))
    enddo
 
    !!END Debug
