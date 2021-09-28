@@ -71,11 +71,7 @@ subroutine scf_loop(is_restart,&
  ! Begin CMK
  real(dp),allocatable    :: hamiltonian_exx_beta(:,:,:)
  real(dp),allocatable    :: hamiltonian_exx_alpha(:,:,:)
- real(dp),allocatable    :: exc_ao(:,:,:)
  real(dp),allocatable    :: vxc_ao(:,:,:)
- !!!debug
- real(dp),allocatable    :: hamiltonian_test_vxc(:,:,:)
- !!!end debug
  ! End CMK
 !=====
 
@@ -98,18 +94,12 @@ subroutine scf_loop(is_restart,&
  !Begin CMK
  call clean_allocate('Alpha component exchange K',hamiltonian_exx_alpha,basis%nbf,basis%nbf,nspin)
  call clean_allocate('Beta component exchange K',hamiltonian_exx_beta,basis%nbf,basis%nbf,nspin)
- call clean_allocate('DFT XC energy', exc_ao, basis%nbf,basis%nbf,nspin)
  call clean_allocate('DFT VXC ', vxc_ao, basis%nbf,basis%nbf,nspin)
- !!!cmk debug
- call clean_allocate('text vxc ', hamiltonian_test_vxc, basis%nbf,basis%nbf,nspin)
- hamiltonian_test_vxc(:,:,:) = 0.0_dp
- !!!end debug
  !End CMK
  hamiltonian_exx(:,:,:) = 0.0_dp
  ! Begin CMK
  hamiltonian_exx_alpha(:,:,:) = 0.0_dp
  hamiltonian_exx_beta(:,:,:) = 0.0_dp
- exc_ao(:,:,:) = 0.0_dp
  vxc_ao(:,:,:) = 0.0_dp
  ! End CMK
 
@@ -168,11 +158,10 @@ subroutine scf_loop(is_restart,&
    ! DFT XC potential is added here
    ! hamiltonian_xc is used as a temporary matrix
    if( calc_type%is_dft ) then
-     call dft_exc_vxc_batch(BATCH_SIZE,basis,occupation,c_matrix,hamiltonian_xc,en_gks%xc,exc_ao=exc_ao)
+     call dft_exc_vxc_batch(BATCH_SIZE,basis,occupation,c_matrix,hamiltonian_xc,en_gks%xc)
      ! Begin CMK
      !catch vxc before exact exchange is added
      vxc_ao(:,:,:) = hamiltonian_xc(:,:,:)
-
      ! End CMK
    endif
 
@@ -269,14 +258,6 @@ subroutine scf_loop(is_restart,&
    ! Add the XC part of the hamiltonian to the total hamiltonian
    hamiltonian(:,:,:) = hamiltonian(:,:,:) + hamiltonian_xc(:,:,:)
 
-   !!CMK Debug
-   !this should be the same as the vxc_ao matrix
-   hamiltonian_test_vxc(:,:,:) = hamiltonian(:,:,:) - (hamiltonian_exx_beta(:,:,:) + vxc_ao(:,:,:) ) 
-   do ispin=1,nspin
-     hamiltonian_test_vxc(:,:,ispin) = hamiltonian_test_vxc(:,:,ispin) - (hamiltonian_hartree(:,:) + hamiltonian_kinetic(:,:) + hamiltonian_nucleus(:,:))
-   enddo
-
-   !!END Debug
 
    ! All the components of the energy have been calculated at this stage
    ! Sum up to get the total energy
@@ -389,10 +370,6 @@ subroutine scf_loop(is_restart,&
    ! Print the expectation values for each component involving exchange (alphaK, betaK, vxc)
    call print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx_alpha,hamiltonian_exx_beta,vxc_ao)
    call print_nucleus_kinetic_expectations(basis,c_matrix,occupation,hamiltonian_nucleus,hamiltonian_kinetic)
-
-   ! cmk debug
-   print *,"values below are actually ham_exx_alpha, ham_exx_beta, and then hamiltonian_test_vxc"
-   call print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx_alpha,hamiltonian_exx_beta,hamiltonian_test_vxc)
    ! End CMK
 
  endif
