@@ -103,6 +103,7 @@ subroutine scf_loop(is_restart,&
  vxc_ao(:,:,:) = 0.0_dp
  ! End CMK
 
+
  !
  ! Setup the grids for the quadrature of DFT potential/energy
  if( calc_type%is_dft ) then
@@ -278,6 +279,7 @@ subroutine scf_loop(is_restart,&
    ! DIIS or simple mixing on the hamiltonian
    call hamiltonian_prediction(s_matrix,x_matrix,p_matrix,hamiltonian,en_gks%total)
 
+
    !
    ! Diagonalize the Hamiltonian H
    ! Generalized eigenvalue problem with overlap matrix S
@@ -285,7 +287,6 @@ subroutine scf_loop(is_restart,&
    ! save the old eigenvalues
    ! This subroutine works with or without scalapack
    call diagonalize_hamiltonian_scalapack(hamiltonian,x_matrix,energy,c_matrix)
-
 
    !
    ! When level_shifting is used, the unoccupied state energies have to be brought
@@ -298,6 +299,7 @@ subroutine scf_loop(is_restart,&
    call dump_out_energy('=== Energies ===',occupation,energy)
 
    call output_homolumo('gKS',occupation,energy,1,nstate)
+
 
    !
    ! Output the total energy and its components
@@ -325,6 +327,7 @@ subroutine scf_loop(is_restart,&
    ! Save the old one for the convergence criterium
    call setup_density_matrix(c_matrix,occupation,p_matrix)
 
+
    !
    ! p_matrix preconditioning to damp out charge oscillations
    !
@@ -343,9 +346,9 @@ subroutine scf_loop(is_restart,&
      call write_restart(SMALL_RESTART,basis,occupation,c_matrix,energy)
    endif
 
+
  !
  ! end of the big SCF loop
-
  enddo
 
 
@@ -361,7 +364,6 @@ subroutine scf_loop(is_restart,&
  if( calc_type%is_dft ) call destroy_dft_grid()
 
  
-
  if( print_hartree_ ) then
    call print_hartee_expectation(basis,p_matrix,c_matrix,occupation,hamiltonian_hartree,hamiltonian_exx)
    call print_expectations(basis,c_matrix,hamiltonian_kinetic)
@@ -507,6 +509,7 @@ subroutine print_hartee_expectation(basis,p_matrix,c_matrix,occupation,hamiltoni
  call dump_out_energy_yaml('hartree expectation value',h_ii,1,nstate)
  write(stdout,'(1x,a,2(3x,f12.6))') 'Hartree  HOMO expectation (eV):',h_ii(nocc,:) * Ha_eV
  
+
  call matrix_ao_to_mo_diag(c_matrix_restart,hamiltonian_exx,h_ii)
  call dump_out_energy('=== Exchange expectation value ===',occupation,h_ii)
  call dump_out_energy_yaml('exchange expectation value',h_ii,1,nstate)
@@ -724,7 +727,6 @@ subroutine print_exchange_expectations(basis,c_matrix,occupation,hamiltonian_exx
 
 
 ! End CMK
-
 
 !=========================================================================
 end module m_scf_loop
