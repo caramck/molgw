@@ -301,7 +301,20 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
     ! Tamm-Dancoff approximation consists in setting B matrix to zero
     ! Then A+B = A-B = A
     apb_matrix(:, :) = 0.5_dp * ( apb_matrix(:, :) + amb_matrix(:, :) )
+
+    ! Print the matrices after TDA
+    write(stdout,'(/,a)') ' A+B matrix after TDA:'
+    do t_ia=1,m_apb
+      write(stdout,'(100f12.6)') (apb_matrix(t_ia,t_jb), t_jb=1,n_apb)
+    enddo
+
     amb_matrix(:, :) = apb_matrix(:, :)
+
+     ! Print the matrices after TDA
+    write(stdout,'(/,a)') ' A-B matrix after TDA:'
+    do t_ia=1,m_apb
+      write(stdout,'(100f12.6)') (amb_matrix(t_ia,t_jb), t_jb=1,n_apb)
+    enddo
   endif
   ! Construction done!
   !if(has_auxil_basis) call destroy_eri_3center_eigen()
@@ -364,6 +377,12 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
       ! The following call works with AND without SCALAPACK
       call diago_4blocks_davidson(toldav, nstep_dav, amb_diag_rpa, amb_matrix, apb_matrix, desc_apb, &
                                   eigenvalue, xpy_matrix, xmy_matrix, desc_x)
+                                  
+      ! Print the eigenvalues after diagonalization
+      write(stdout,'(/,a)') ' Eigenvalues after diagonalization:'
+      do t_ia=1,nexc
+        write(stdout,'(100f12.6)') eigenvalue(t_ia)
+      enddo
     endif
   else
     ! The following call works with AND without SCALAPACK
@@ -412,6 +431,14 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
   if( PRESENT(x_matrix) ) then
     x_matrix(:, :) = 0.5_dp * ( xpy_matrix(:, :) + xmy_matrix(:, :) )
   endif
+
+  if( PRESENT(x_matrix) ) then
+    write(stdout,'(/,a)') ' X matrix after diagonalization:'
+    do t_ia=1,SIZE(x_matrix,1)
+      write(stdout,'(100f12.6)') (x_matrix(t_ia,t_jb), t_jb=1,SIZE(x_matrix,2))
+    enddo
+  endif
+
   if( PRESENT(y_matrix) ) then
     y_matrix(:, :) = 0.5_dp * ( xpy_matrix(:, :) - xmy_matrix(:, :) )
   endif
