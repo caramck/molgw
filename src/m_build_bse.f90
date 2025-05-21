@@ -58,6 +58,8 @@ subroutine build_amb_apb_common(is_triplet_currently, lambda, nmat, nbf, nstate,
   integer              :: m_apb_block, n_apb_block
   real(dp), allocatable :: amb_block(:, :)
   real(dp), allocatable :: apb_block(:, :)
+  real(dp), allocatable :: amb_matrix_before(:, :)
+  real(dp), allocatable :: apb_matrix_before(:, :)
   !=====
 
   call start_clock(timing_build_common)
@@ -179,6 +181,8 @@ subroutine build_amb_apb_common(is_triplet_currently, lambda, nmat, nbf, nstate,
 
       if( iprow == iprow_sd .AND. ipcol == ipcol_sd ) then
         ! Save matrices to temporary local before adding block
+        allocate(amb_matrix_before(m_apb, n_apb))
+        allocate(apb_matrix_before(m_apb, n_apb))
         amb_matrix_before = amb_matrix(:,:)
         apb_matrix_before = apb_matrix(:,:)
 
@@ -191,6 +195,9 @@ subroutine build_amb_apb_common(is_triplet_currently, lambda, nmat, nbf, nstate,
         ! Add blocks to matrices
         amb_matrix(:, :) = amb_matrix(:, :) + amb_block(:, :)
         apb_matrix(:, :) = apb_matrix(:, :) + apb_block(:, :)
+        
+        deallocate(amb_matrix_before)
+        deallocate(apb_matrix_before)
       endif
 
 
@@ -975,6 +982,8 @@ subroutine build_amb_apb_screened_exchange_auxil(alpha_local, lambda, desc_apb, 
 
       if( iprow == iprow_sd .AND. ipcol == ipcol_sd ) then
         ! Save matrices to temporary local before adding block
+        allocate(amb_matrix_before(m_apb, n_apb))
+        allocate(apb_matrix_before(m_apb, n_apb))
         amb_matrix_before = amb_matrix(:,:)
         apb_matrix_before = apb_matrix(:,:)
 
