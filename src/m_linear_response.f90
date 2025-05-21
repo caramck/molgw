@@ -61,6 +61,7 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
   integer                   :: desc_apb(NDEL), desc_x(NDEL)
   integer                   :: info
   logical                   :: is_triplet_currently
+  integer                   :: t_ia, t_jb
   !=====
 
   call start_clock(timing_pola)
