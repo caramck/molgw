@@ -317,6 +317,30 @@ subroutine optical_spectrum(is_triplet_currently, basis, occupation, c_matrix, c
           write(stdout, '(8x,i4,a,i4,1x,f12.5)') istate, ' <- ', astate, coeff(chi%npole_reso+t_ia_global)
       enddo
 
+      ! Print complete transition matrix with key
+      write(stdout, '(/,a)') 'Complete Transition Matrix:'
+      write(stdout, '(a)') 'Key:'
+      write(stdout, '(a)') 'i -> j: Transition from state i to state j'
+      write(stdout, '(a)') 'i <- j: Transition from state j to state i'
+      write(stdout, '(/,a)') 'Matrix Format:'
+      write(stdout, '(8x)', advance='no')
+      do astate=1, chi%npole_reso
+        write(stdout, '(i8)', advance='no') astate
+      enddo
+      write(stdout, *)
+      do istate=1, chi%npole_reso
+        write(stdout, '(i4,4x)', advance='no') istate
+        do astate=1, chi%npole_reso
+          t_ia_global = (istate-1)*chi%npole_reso + astate
+          if(t_ia_global <= chi%npole_reso) then
+            write(stdout, '(f8.4)', advance='no') coeff(t_ia_global)
+          else
+            write(stdout, '(f8.4)', advance='no') coeff(chi%npole_reso + t_ia_global)
+          endif
+        enddo
+        write(stdout, *)
+      enddo
+
       write(stdout, *)
 
     endif
