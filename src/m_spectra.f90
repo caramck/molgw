@@ -235,9 +235,14 @@ subroutine optical_spectrum(is_triplet_currently, basis, occupation, c_matrix, c
         istate = chi%transition_table(1, t_ia_global)
         astate = chi%transition_table(2, t_ia_global)
         if( t_jb /= 0 ) then
+          ! Print matrix elements
+          write(stdout,'(a,i4,a,i4,a,2f12.6)') ' t_ia=',t_ia,' t_jb=',t_jb,' xpy,xmy=', &
+                                               xpy_matrix(t_ia,t_jb), xmy_matrix(t_ia,t_jb)
           ! Resonant
           coeff(                 t_ia_global) = 0.5_dp * ( xpy_matrix(t_ia, t_jb) + xmy_matrix(t_ia, t_jb) ) / SQRT(2.0_dp)
-          ! Anti-Resonant
+          ! Print coefficient
+          write(stdout,'(a,i4,a,f12.6)') ' t_ia_global=',t_ia_global,' coeff=',coeff(t_ia_global)
+          ! Anti-Resonant  
           coeff(chi%npole_reso + t_ia_global) = 0.5_dp * ( xpy_matrix(t_ia, t_jb) - xmy_matrix(t_ia, t_jb) ) / SQRT(2.0_dp)
           xpy_global(            t_ia_global) = xpy_matrix(t_ia, t_jb)
         endif
