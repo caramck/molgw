@@ -384,17 +384,6 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
   endif
 
   ! Print the eigenvalues after diagonalization
-  write(stdout,'(/,a)') ' A-B matrix after diagonalization:'
-  do t_ia=1,SIZE(amb_matrix,1)
-    write(stdout,'(100f12.6)') amb_matrix(t_ia,:)
-  enddo
-  write(stdout,*)
-
-  write(stdout,'(/,a)') ' A+B matrix afterdiagonalization:'
-  do t_ia=1,SIZE(apb_matrix,1) 
-    write(stdout,'(100f12.6)') apb_matrix(t_ia,:)
-  enddo
-  write(stdout,*)
   write(stdout,'(/,a)') ' Eigenvalues after diagonalization:'
   do t_ia=1,nexc
     write(stdout,'(100f12.6)') eigenvalue(t_ia)

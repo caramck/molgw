@@ -21,11 +21,6 @@ module m_build_bse
   use m_eri_ao_mo
   use m_dft_grid
   use m_tddft_fxc
-
-
-  
-
-
 contains
 
 
@@ -179,30 +174,17 @@ subroutine build_amb_apb_common(is_triplet_currently, lambda, nmat, nbf, nstate,
       call auxil%sum(amb_block)
       call auxil%sum(apb_block)
 
+
       if( iprow == iprow_sd .AND. ipcol == ipcol_sd ) then
-        ! Save matrices to temporary local before adding block
-        allocate(amb_matrix_before(m_apb, n_apb))
-        allocate(apb_matrix_before(m_apb, n_apb))
-        amb_matrix_before = amb_matrix(:,:)
-        apb_matrix_before = apb_matrix(:,:)
-
-        ! Print the matrix before adding the block
-        write(stdout,'(/,a)') ' A-B matrix before adding block:'
-        do t_ia=1,m_apb
-          write(stdout,'(100f12.6)') (amb_matrix_before(t_ia,t_jb), t_jb=1,n_apb)
-        enddo
-
         ! Add blocks to matrices
         amb_matrix(:, :) = amb_matrix(:, :) + amb_block(:, :)
         apb_matrix(:, :) = apb_matrix(:, :) + apb_block(:, :)
         
-        deallocate(amb_matrix_before)
-        deallocate(apb_matrix_before)
       endif
-
 
       deallocate(amb_block)
       deallocate(apb_block)
+
     enddo
   enddo
 
@@ -224,6 +206,16 @@ subroutine build_amb_apb_common(is_triplet_currently, lambda, nmat, nbf, nstate,
 
   if(ALLOCATED(eri_eigenstate_jbmin)) deallocate(eri_eigenstate_jbmin)
 
+  ! Print the amb and apb matrices (empty matrices + energy block)
+  write(stdout, '(/,a)') 'Matrices before BSE contribution:'
+  write(stdout, '(a)') 'AMB matrix:'
+  do t_ia = 1, m_apb
+    write(stdout, '(100f12.6)') amb_matrix(t_ia, 1:n_apb)
+  enddo
+  write(stdout, '(a)') 'APB matrix:'
+  do t_ia = 1, m_apb
+    write(stdout, '(100f12.6)') apb_matrix(t_ia, 1:n_apb)
+  enddo
 
   call stop_clock(timing_build_common)
 
@@ -1005,21 +997,17 @@ subroutine build_amb_apb_screened_exchange_auxil(alpha_local, lambda, desc_apb, 
         ! Add blocks to matrices
         amb_matrix(:, :) = amb_matrix(:, :) + amb_block(:, :)
         apb_matrix(:, :) = apb_matrix(:, :) + apb_block(:, :)
-
-        ! Print the matrices after adding the block
-        write(stdout,'(/,a)') ' A-B matrix after adding block:'
-        do t_ia=1,m_apb
-          write(stdout,'(100f12.6)') (amb_matrix(t_ia,t_jb), t_jb=1,n_apb)
-        enddo
-        write(stdout,'(/,a)') ' A+B matrix after adding block:'
-
-        ! Calculate A matrix from A+B and A-B after adding block
-        write(stdout,'(/,a)') ' A matrix after adding block:'
-        do t_ia=1,m_apb
-          write(stdout,'(100f12.6)') (0.5_dp * (apb_matrix(t_ia,t_jb) + amb_matrix(t_ia,t_jb)), t_jb=1,n_apb)
-        enddo
         
-        
+        ! Print the matrices after BSE contribution
+        write(stdout, '(/,a)') 'Matrices after BSE contribution:'
+        write(stdout, '(a)') 'AMB matrix:'
+        do t_ia = 1, m_apb
+          write(stdout, '(100f12.6)') amb_matrix(t_ia, 1:n_apb)
+        enddo
+        write(stdout, '(a)') 'APB matrix:'
+        do t_ia = 1, m_apb
+          write(stdout, '(100f12.6)') apb_matrix(t_ia, 1:n_apb)
+        enddo
         
       endif
 
