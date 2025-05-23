@@ -254,13 +254,10 @@ subroutine build_amb_apb_diag_auxil(nmat, nstate, energy, wpol, m_apb, n_apb, am
     t_jb = colindex_global_to_local('S', t_jb_global)
 
     jstate = wpol%transition_table(1, t_jb_global)
-    write(stdout,'(a,i6)') ' jstate = ', jstate
     bstate = wpol%transition_table(2, t_jb_global)
-    write(stdout,'(a,i6)') ' bstate = ', bstate
     jbspin = wpol%transition_table(3, t_jb_global)
-    write(stdout,'(a,i6)') ' jbspin = ', jbspin
+ 
     amb_diag_rpa(t_jb_global) = energy(bstate, jbspin) - energy(jstate, jbspin)
-    write(stdout,'(a,i6,a,f12.6)') ' amb_diag_rpa(',t_jb_global,') = ', amb_diag_rpa(t_jb_global)
 
     ! If the diagonal element belongs to this proc, then add it.
     if( t_ia > 0 .AND. t_jb > 0 ) then

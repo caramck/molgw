@@ -235,13 +235,8 @@ subroutine optical_spectrum(is_triplet_currently, basis, occupation, c_matrix, c
         istate = chi%transition_table(1, t_ia_global)
         astate = chi%transition_table(2, t_ia_global)
         if( t_jb /= 0 ) then
-          ! Print matrix elements
-          write(stdout,'(a,i4,a,i4,a,2f12.6)') ' t_ia=',t_ia,' t_jb=',t_jb,' xpy,xmy=', &
-                                               xpy_matrix(t_ia,t_jb), xmy_matrix(t_ia,t_jb)
           ! Resonant
           coeff(                 t_ia_global) = 0.5_dp * ( xpy_matrix(t_ia, t_jb) + xmy_matrix(t_ia, t_jb) ) / SQRT(2.0_dp)
-          ! Print coefficient
-          write(stdout,'(a,i4,a,f12.6)') ' t_ia_global=',t_ia_global,' coeff=',coeff(t_ia_global)
           ! Anti-Resonant  
           coeff(chi%npole_reso + t_ia_global) = 0.5_dp * ( xpy_matrix(t_ia, t_jb) - xmy_matrix(t_ia, t_jb) ) / SQRT(2.0_dp)
           xpy_global(            t_ia_global) = xpy_matrix(t_ia, t_jb)
@@ -322,31 +317,7 @@ subroutine optical_spectrum(is_triplet_currently, basis, occupation, c_matrix, c
           write(stdout, '(8x,i4,a,i4,1x,f12.5)') istate, ' <- ', astate, coeff(chi%npole_reso+t_ia_global)
       enddo
 
-      ! Print complete transition matrix with key
-      write(stdout, '(/,a)') 'Complete Transition Matrix:'
-      write(stdout, '(a)') 'Key:'
-      write(stdout, '(a)') 'i -> j: Transition from state i to state j'
-      write(stdout, '(a)') 'i <- j: Transition from state j to state i'
-      write(stdout, '(/,a)') 'Matrix Format:'
-      write(stdout, '(8x)', advance='no')
-      do astate=1, chi%npole_reso
-        write(stdout, '(i8)', advance='no') astate
-      enddo
-      write(stdout, *)
-      do istate=1, chi%npole_reso
-        write(stdout, '(i4,4x)', advance='no') istate
-        do astate=1, chi%npole_reso
-          t_ia_global = (istate-1)*chi%npole_reso + astate
-          if(t_ia_global <= chi%npole_reso) then
-            write(stdout, '(f8.4)', advance='no') coeff(t_ia_global)
-          else
-            write(stdout, '(f8.4)', advance='no') coeff(chi%npole_reso + t_ia_global)
-          endif
-        enddo
-        write(stdout, *)
-      enddo
-
-      write(stdout, *)
+      
 
     endif
   enddo
