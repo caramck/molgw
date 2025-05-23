@@ -998,6 +998,16 @@ subroutine build_amb_apb_screened_exchange_auxil(alpha_local, lambda, desc_apb, 
         amb_matrix(:, :) = amb_matrix(:, :) + amb_block(:, :)
         apb_matrix(:, :) = apb_matrix(:, :) + apb_block(:, :)
         
+        
+        write(stdout,'(/,a)') ' A-B block to be added:'
+        do t_ia=1,m_apb
+          write(stdout,'(100f12.6)') (amb_block(t_ia,t_jb), t_jb=1,n_apb)
+        enddo
+        write(stdout,'(/,a)') ' A+B block to be added:'
+        do t_ia=1,m_apb
+          write(stdout,'(100f12.6)') (apb_block(t_ia,t_jb), t_jb=1,n_apb)
+        enddo
+        
         ! Print the matrices after BSE contribution
         write(stdout, '(/,a)') 'Matrices after BSE contribution:'
         write(stdout, '(a)') 'AMB matrix:'
