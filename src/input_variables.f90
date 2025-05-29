@@ -280,7 +280,11 @@
  print_density_matrix = 'no'
  print_eri = 'no'
  print_hartree = 'no'
+<<<<<<< HEAD
  print_xi = 'no'
+=======
+ print_xi = 'no',
+>>>>>>> 92290b9a (update to add the print_xi variable as a new input variable, pass the amb and apb blocks from the BSE, and calculate the eigenvalues after matrix diagonalization from just the BSE blocks. print the xi eigenvalues to the yaml file.)
  print_multipole = 'no'
  print_pdos = 'no'
  print_restart = 'yes'
