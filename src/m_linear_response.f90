@@ -49,8 +49,10 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
   real(dp)                  :: alpha_local, lambda_
   real(dp), allocatable      :: amb_diag_rpa(:)
   real(dp), allocatable      :: amb_matrix(:, :), apb_matrix(:, :)
+  real(dp), allocatable      :: amb_block(:,:), apb_block(:,:)
   real(dp), allocatable      :: xpy_matrix(:, :), xmy_matrix(:, :)
   real(dp), allocatable      :: eigenvalue(:)
+  real(dp), allocatable      :: xi_eigenval(:)
   real(dp), allocatable      :: energy_qp(:, :)
   logical                   :: is_tddft, is_rpa, long_range_true=.true.
   logical                   :: has_manual_tdhf
@@ -61,7 +63,7 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
   integer                   :: desc_apb(NDEL), desc_x(NDEL)
   integer                   :: info
   logical                   :: is_triplet_currently
-  integer                   :: t_ia, t_jb
+  integer                   :: t_ia, t_jb, t_kb
   !=====
 
   call start_clock(timing_pola)
@@ -354,6 +356,7 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
   if( nexc == 0 ) nexc = nmat
 
   allocate(eigenvalue(nexc))
+  allocate(xi_eigenval(nexc))
 
   ! Allocate (X+Y)
   ! Allocate (X-Y) only if actually needed
@@ -385,19 +388,18 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
 
   ! After Diagonalization
   ! Calculate xi_eigenvalue array from amb_block and apb_block using x+y and x-y matrices
-  allocate(xi_eigenvalue(nexc))
-  xi_eigenvalue(:) = 0.0_dp
+  xi_eigenval(:) = 0.0_dp
 
   do t_ia=1,nexc
     ! For each eigenvalue, calculate expectation value using x+y and x-y matrices
     do t_jb=1,n_x
       do t_kb=1,n_x
         ! Contribution from A+B block
-        xi_eigenvalue(t_ia) = xi_eigenvalue(t_ia) + &
+        xi_eigenval(t_ia) = xi_eigenval(t_ia) + &
           0.5_dp * xpy_matrix(t_jb,t_ia) * apb_block(t_jb,t_kb) * xpy_matrix(t_kb,t_ia)
         
         ! Contribution from A-B block  
-        xi_eigenvalue(t_ia) = xi_eigenvalue(t_ia) + &
+        xi_eigenval(t_ia) = xi_eigenval(t_ia) + &
           0.5_dp * xmy_matrix(t_jb,t_ia) * amb_block(t_jb,t_kb) * xmy_matrix(t_kb,t_ia)
       enddo
     enddo
@@ -434,7 +436,7 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
   ! and the dynamic dipole tensor
   !
   if( is_tdhf .OR. is_tddft .OR. is_bse ) then
-    call optical_spectrum(is_triplet_currently, basis, occupation, c_matrix, wpol_out, xpy_matrix, xmy_matrix, eigenvalue, xi_eigenvalue)
+    call optical_spectrum(is_triplet_currently, basis, occupation, c_matrix, wpol_out, xpy_matrix, xmy_matrix, eigenvalue, xi_eigenval)
     select case(TRIM(lower(stopping)))
     case('spherical')
       call stopping_power(basis, c_matrix, wpol_out, xpy_matrix, eigenvalue)
