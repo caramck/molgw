@@ -279,7 +279,7 @@
  print_density_matrix = 'no'
  print_eri = 'no'
  print_hartree = 'no'
- print_xi = 'no',
+ print_xi = 'no'
  print_multipole = 'no'
  print_pdos = 'no'
  print_restart = 'yes'
