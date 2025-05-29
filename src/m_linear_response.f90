@@ -445,6 +445,9 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
     end select
   endif
 
+  ! Deallocate xi_eigenval array
+  deallocate(xi_eigenval)
+
   ! extract X and Y if requested
   if( PRESENT(x_matrix) ) then
     x_matrix(:, :) = 0.5_dp * ( xpy_matrix(:, :) + xmy_matrix(:, :) )
