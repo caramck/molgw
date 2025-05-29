@@ -150,6 +150,7 @@ module m_inputparam
   !logical,protected                :: print_all_MO_wfn_file_
   !logical,protected                :: print_multipole_
   !logical,protected                :: print_hartree_
+  !logical,protected                :: print_xi_
   !logical,protected                :: print_density_matrix_
   !logical,protected                :: print_rho_grid_
   !logical,protected                :: print_tddft_matrices_
@@ -962,6 +963,7 @@ subroutine read_inputfile_namelist()
   print_wfn_files_          = yesno_to_logical(print_wfn_files)
   print_all_MO_wfn_file_    = yesno_to_logical(print_all_MO_wfn_file)
   print_hartree_            = yesno_to_logical(print_hartree)
+  print_xi_                 = yesno_to_logical(print_xi)
   print_density_matrix_     = yesno_to_logical(print_density_matrix)
   print_rho_grid_           = yesno_to_logical(print_rho_grid)
   gwgamma_tddft_            = yesno_to_logical(gwgamma_tddft)

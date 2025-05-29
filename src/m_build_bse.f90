@@ -696,7 +696,7 @@ end subroutine build_amb_apb_bse
 
 !=========================================================================
 subroutine build_amb_apb_screened_exchange_auxil(alpha_local, lambda, desc_apb, wpol, wpol_static, m_apb, n_apb, &
-                                                 amb_matrix, apb_matrix)
+                                                 amb_matrix, apb_matrix, amb_block, apb_block)
   implicit none
 
   real(dp), intent(in)                :: alpha_local, lambda
@@ -704,6 +704,7 @@ subroutine build_amb_apb_screened_exchange_auxil(alpha_local, lambda, desc_apb, 
   type(spectral_function), intent(in) :: wpol, wpol_static
   integer, intent(in)                 :: m_apb, n_apb
   real(dp), intent(inout)             :: amb_matrix(m_apb, n_apb), apb_matrix(m_apb, n_apb)
+  real(dp), allocatable, intent(out)  :: amb_block(:,:), apb_block(:,:)
   !=====
   logical              :: is_bse
   integer              :: nmat
@@ -716,8 +717,6 @@ subroutine build_amb_apb_screened_exchange_auxil(alpha_local, lambda, desc_apb, 
   real(dp), allocatable :: wp0(:, :, :, :), wp0_lr(:, :, :, :), w0_local(:)
   integer              :: iprow, ipcol, irank
   integer              :: m_apb_block, n_apb_block
-  real(dp), allocatable :: amb_block(:, :)
-  real(dp), allocatable :: apb_block(:, :)
   real(dp), allocatable :: amb_matrix_before(:, :)
   real(dp), allocatable :: apb_matrix_before(:, :)
 #if defined(HAVE_SCALAPACK)
@@ -1021,10 +1020,6 @@ subroutine build_amb_apb_screened_exchange_auxil(alpha_local, lambda, desc_apb, 
         
       endif
 
-
-      
-      deallocate(amb_block)
-      deallocate(apb_block)
 
 
     enddo

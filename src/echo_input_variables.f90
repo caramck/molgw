@@ -157,6 +157,7 @@
   write(stdout, '(1x,a32,6x,a)') 'print_density_matrix', print_density_matrix 
   write(stdout, '(1x,a32,6x,a)') 'print_eri', print_eri 
   write(stdout, '(1x,a32,6x,a)') 'print_hartree', print_hartree 
+  write(stdout, '(1x,a32,6x,a)') 'print_xi', print_xi
   write(stdout, '(1x,a32,6x,a)') 'print_line_rho_diff_tddft', print_line_rho_diff_tddft 
   write(stdout, '(1x,a32,6x,a)') 'print_line_rho_tddft', print_line_rho_tddft 
   write(stdout, '(1x,a32,6x,a)') 'print_multipole', print_multipole 

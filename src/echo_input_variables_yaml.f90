@@ -157,6 +157,7 @@
  write(unit_yaml, '(4x,a,10x,a)') 'print_density_matrix:', yesno_to_TrueFalse(print_density_matrix) 
  write(unit_yaml, '(4x,a,21x,a)') 'print_eri:', yesno_to_TrueFalse(print_eri) 
  write(unit_yaml, '(4x,a,17x,a)') 'print_hartree:', yesno_to_TrueFalse(print_hartree) 
+ write(unit_yaml, '(4x,a,17x,a)') 'print_xi:', yesno_to_TrueFalse(print_xi) 
  write(unit_yaml, '(4x,a,5x,a)') 'print_line_rho_diff_tddft:', yesno_to_TrueFalse(print_line_rho_diff_tddft) 
  write(unit_yaml, '(4x,a,10x,a)') 'print_line_rho_tddft:', yesno_to_TrueFalse(print_line_rho_tddft) 
  write(unit_yaml, '(4x,a,15x,a)') 'print_multipole:', yesno_to_TrueFalse(print_multipole) 

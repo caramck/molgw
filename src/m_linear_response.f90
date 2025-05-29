@@ -256,7 +256,7 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
     ! Step 3
     if(alpha_local > 1.0e-6_dp) then
       call build_amb_apb_screened_exchange_auxil(alpha_local, lambda_, desc_apb, wpol_out, wpol_static, &
-                                                 m_apb, n_apb, amb_matrix, apb_matrix)
+                                                 m_apb, n_apb, amb_matrix, apb_matrix, amb_block, apb_block)
     else
       write(stdout, '(a,f8.3)') ' Content of Exchange: ', alpha_local
     endif
@@ -383,20 +383,24 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
     call diago_4blocks_rpa_sca(amb_diag_rpa, apb_matrix, desc_apb, eigenvalue, xpy_matrix, desc_x)
   endif
 
-  ! Print the eigenvalues after diagonalization
-  write(stdout,'(/,a)') ' Eigenvalues after diagonalization:'
+  ! After Diagonalization
+  ! Calculate xi_eigenvalue array from amb_block and apb_block using x+y and x-y matrices
+  allocate(xi_eigenvalue(nexc))
+  xi_eigenvalue(:) = 0.0_dp
+
   do t_ia=1,nexc
-    write(stdout,'(100f12.6)') eigenvalue(t_ia)
-    ! Print the corresponding X+Y and X-Y matrices for this eigenvalue
-    write(stdout,'(a,i4)') ' X+Y matrix for eigenvalue ',t_ia
+    ! For each eigenvalue, calculate expectation value using x+y and x-y matrices
     do t_jb=1,n_x
-      write(stdout,'(100f12.6)') xpy_matrix(t_jb,t_ia)
+      do t_kb=1,n_x
+        ! Contribution from A+B block
+        xi_eigenvalue(t_ia) = xi_eigenvalue(t_ia) + &
+          0.5_dp * xpy_matrix(t_jb,t_ia) * apb_block(t_jb,t_kb) * xpy_matrix(t_kb,t_ia)
+        
+        ! Contribution from A-B block  
+        xi_eigenvalue(t_ia) = xi_eigenvalue(t_ia) + &
+          0.5_dp * xmy_matrix(t_jb,t_ia) * amb_block(t_jb,t_kb) * xmy_matrix(t_kb,t_ia)
+      enddo
     enddo
-    write(stdout,'(a,i4)') ' X-Y matrix for eigenvalue ',t_ia  
-    do t_jb=1,n_x
-      write(stdout,'(100f12.6)') xmy_matrix(t_jb,t_ia)
-    enddo
-    write(stdout,*)
   enddo
 
   ! Deallocate the non-necessary matrices
@@ -408,6 +412,9 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
   ! Relax: this is indeed tolerated by clean_deallocate
   call clean_deallocate('A-B', amb_matrix)
 
+  ! Deallocate amb block and apb block matrices
+  deallocate(amb_block)
+  deallocate(apb_block)
 
   !
   ! Second part of the RPA correlation energy: sum over positive eigenvalues
@@ -427,7 +434,7 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
   ! and the dynamic dipole tensor
   !
   if( is_tdhf .OR. is_tddft .OR. is_bse ) then
-    call optical_spectrum(is_triplet_currently, basis, occupation, c_matrix, wpol_out, xpy_matrix, xmy_matrix, eigenvalue)
+    call optical_spectrum(is_triplet_currently, basis, occupation, c_matrix, wpol_out, xpy_matrix, xmy_matrix, eigenvalue, xi_eigenvalue)
     select case(TRIM(lower(stopping)))
     case('spherical')
       call stopping_power(basis, c_matrix, wpol_out, xpy_matrix, eigenvalue)

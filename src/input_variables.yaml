@@ -516,6 +516,14 @@ print_hartree:
   default: 'no'
   comment: Prints the Hartree potential and exchange expectation value on eigenstates.
 
+print_xi:
+  family: io
+  datatype: yes/no
+  mandatory: 'no'
+  experimental: 'no'
+  default: 'no'
+  comment: Prints the BSE kernel expectation value to the yaml file.
+
 print_multipole:
   family: io
   datatype: yes/no
