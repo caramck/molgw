@@ -388,22 +388,32 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
 
   ! After Diagonalization
   ! Calculate xi_eigenvalue array from amb_block and apb_block using x+y and x-y matrices
-  xi_eigenval(:) = 0.0_dp
+  ! Only calculate when we have screened exchange contribution
+  if(alpha_local > 1.0e-6_dp) then
+    xi_eigenval(:) = 0.0_dp
 
-  do t_ia=1,nexc
-    ! For each eigenvalue, calculate expectation value using x+y and x-y matrices
-    do t_jb=1,n_x
-      do t_kb=1,n_x
-        ! Contribution from A+B block
-        xi_eigenval(t_ia) = xi_eigenval(t_ia) + &
-          0.5_dp * xpy_matrix(t_jb,t_ia) * apb_block(t_jb,t_kb) * xpy_matrix(t_kb,t_ia)
-        
-        ! Contribution from A-B block  
-        xi_eigenval(t_ia) = xi_eigenval(t_ia) + &
-          0.5_dp * xmy_matrix(t_jb,t_ia) * amb_block(t_jb,t_kb) * xmy_matrix(t_kb,t_ia)
+    do t_ia=1,nexc
+      ! For each eigenvalue, calculate expectation value using x+y and x-y matrices
+      do t_jb=1,n_x
+        do t_kb=1,n_x
+          ! Contribution from A+B block
+          xi_eigenval(t_ia) = xi_eigenval(t_ia) + &
+            0.5_dp * xpy_matrix(t_jb,t_ia) * apb_block(t_jb,t_kb) * xpy_matrix(t_kb,t_ia)
+          
+          ! Contribution from A-B block  
+          xi_eigenval(t_ia) = xi_eigenval(t_ia) + &
+            0.5_dp * xmy_matrix(t_jb,t_ia) * amb_block(t_jb,t_kb) * xmy_matrix(t_kb,t_ia)
+        enddo
       enddo
     enddo
-  enddo
+
+    ! Deallocate amb block and apb block matrices
+    deallocate(amb_block)
+    deallocate(apb_block)
+  else
+    ! When no screened exchange, set xi_eigenval to zero
+    xi_eigenval(:) = 0.0_dp
+  endif
 
   ! Deallocate the non-necessary matrices
   deallocate(amb_diag_rpa)
@@ -413,10 +423,6 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
   ! (A-B) may have been already deallocated earlier in the case of RPA
   ! Relax: this is indeed tolerated by clean_deallocate
   call clean_deallocate('A-B', amb_matrix)
-
-  ! Deallocate amb block and apb block matrices
-  deallocate(amb_block)
-  deallocate(apb_block)
 
   !
   ! Second part of the RPA correlation energy: sum over positive eigenvalues
