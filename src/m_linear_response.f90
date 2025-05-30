@@ -389,7 +389,7 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
   ! After Diagonalization
   ! Calculate xi_eigenvalue array from amb_block and apb_block using x+y and x-y matrices
   ! Only calculate when we have screened exchange contribution
-  if(alpha_local > 1.0e-6_dp) then
+  if(alpha_local > 1.0e-6_dp .AND. allocated(apb_block) .AND. allocated(amb_block)) then
     xi_eigenval(:) = 0.0_dp
 
     do t_ia=1,nexc
@@ -411,7 +411,7 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
     deallocate(amb_block)
     deallocate(apb_block)
   else
-    ! When no screened exchange, set xi_eigenval to zero
+    ! When no screened exchange or blocks not allocated, set xi_eigenval to zero
     xi_eigenval(:) = 0.0_dp
   endif
 
