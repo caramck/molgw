@@ -977,66 +977,14 @@ subroutine build_amb_apb_screened_exchange_auxil(alpha_local, lambda, desc_apb, 
         amb_matrix_before = amb_matrix(:,:)
         apb_matrix_before = apb_matrix(:,:)
 
-        ! Print the matrices before adding the block
-        write(stdout,'(/,a)') ' A-B matrix before adding block:'
-        do t_ia=1,m_apb
-          write(stdout,'(100f12.6)') (amb_matrix_before(t_ia,t_jb), t_jb=1,n_apb)
-        enddo
-        write(stdout,'(/,a)') ' A+B matrix before adding block:'
-        do t_ia=1,m_apb
-          write(stdout,'(100f12.6)') (apb_matrix_before(t_ia,t_jb), t_jb=1,n_apb)
-        enddo
-
-        ! Calculate A matrix from A+B and A-B before adding block
-        write(stdout,'(/,a)') ' A matrix before adding block:'
-        do t_ia=1,m_apb
-          write(stdout,'(100f12.6)') (0.5_dp * (apb_matrix_before(t_ia,t_jb) + amb_matrix_before(t_ia,t_jb)), t_jb=1,n_apb)
-        enddo
-
         ! Add blocks to matrices
         amb_matrix(:, :) = amb_matrix(:, :) + amb_block(:, :)
         apb_matrix(:, :) = apb_matrix(:, :) + apb_block(:, :)
         
-        
-        write(stdout,'(/,a)') ' A-B block to be added:'
-        do t_ia=1,m_apb
-          write(stdout,'(100f12.6)') (amb_block(t_ia,t_jb), t_jb=1,n_apb)
-        enddo
-        write(stdout,'(/,a)') ' A+B block to be added:'
-        do t_ia=1,m_apb
-          write(stdout,'(100f12.6)') (apb_block(t_ia,t_jb), t_jb=1,n_apb)
-        enddo
-        
-        ! Print the matrices after BSE contribution
-        write(stdout, '(/,a)') 'Matrices after BSE contribution:'
-        write(stdout, '(a)') 'AMB matrix:'
-        do t_ia = 1, m_apb
-          write(stdout, '(100f12.6)') amb_matrix(t_ia, 1:n_apb)
-        enddo
-        write(stdout, '(a)') 'APB matrix:'
-        do t_ia = 1, m_apb
-          write(stdout, '(100f12.6)') apb_matrix(t_ia, 1:n_apb)
-        enddo
-        
       endif
-
-
 
     enddo
   enddo
-
-  ! Print the final matrices after all terms have been added
-  if( iprow_sd == 0 .AND. ipcol_sd == 0 ) then
-    write(stdout,'(/,a)') ' Final A-B matrix after all terms:'
-    do t_ia=1,m_apb
-      write(stdout,'(100f12.6)') (amb_matrix(t_ia,t_jb), t_jb=1,n_apb)
-    enddo
-
-    write(stdout,'(/,a)') ' Final A+B matrix after all terms:'
-    do t_ia=1,m_apb
-      write(stdout,'(100f12.6)') (apb_matrix(t_ia,t_jb), t_jb=1,n_apb)
-    enddo
-  endif
 
   call clean_deallocate('Temporary array for W', wp0)
   if(allocated(wp0_lr)) call clean_deallocate('Temporary array for W_lr', wp0_lr)
