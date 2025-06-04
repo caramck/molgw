@@ -206,17 +206,6 @@ subroutine build_amb_apb_common(is_triplet_currently, lambda, nmat, nbf, nstate,
 
   if(ALLOCATED(eri_eigenstate_jbmin)) deallocate(eri_eigenstate_jbmin)
 
-  ! Print the amb and apb matrices (empty matrices + energy block)
-  write(stdout, '(/,a)') 'Matrices before BSE contribution:'
-  write(stdout, '(a)') 'AMB matrix:'
-  do t_ia = 1, m_apb
-    write(stdout, '(100f12.6)') amb_matrix(t_ia, 1:n_apb)
-  enddo
-  write(stdout, '(a)') 'APB matrix:'
-  do t_ia = 1, m_apb
-    write(stdout, '(100f12.6)') apb_matrix(t_ia, 1:n_apb)
-  enddo
-
   call stop_clock(timing_build_common)
 
 end subroutine build_amb_apb_common
