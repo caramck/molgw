@@ -305,19 +305,9 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
     ! Then A+B = A-B = A
     apb_matrix(:, :) = 0.5_dp * ( apb_matrix(:, :) + amb_matrix(:, :) )
 
-    ! Print the matrices after TDA
-    write(stdout,'(/,a)') ' A+B matrix after TDA:'
-    do t_ia=1,m_apb
-      write(stdout,'(100f12.6)') (apb_matrix(t_ia,t_jb), t_jb=1,n_apb)
-    enddo
 
     amb_matrix(:, :) = apb_matrix(:, :)
 
-     ! Print the matrices after TDA
-    write(stdout,'(/,a)') ' A-B matrix after TDA:'
-    do t_ia=1,m_apb
-      write(stdout,'(100f12.6)') (amb_matrix(t_ia,t_jb), t_jb=1,n_apb)
-    enddo
   endif
   ! Construction done!
   !if(has_auxil_basis) call destroy_eri_3center_eigen()
