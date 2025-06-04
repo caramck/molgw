@@ -235,7 +235,6 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
   write(stdout, '(/,a)') ' Build the electron-hole hamiltonian'
 
   if( has_auxil_basis) then
-
     !
     ! Step 1
     call build_amb_apb_diag_auxil(nmat, nstate, energy_qp, wpol_out, m_apb, n_apb, amb_matrix, apb_matrix, amb_diag_rpa)
@@ -245,7 +244,6 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
 #else
     call build_apb_hartree_auxil(is_triplet_currently, lambda_, desc_apb, wpol_out, m_apb, n_apb, apb_matrix)
 #endif
-
 
     !
     ! Step 2

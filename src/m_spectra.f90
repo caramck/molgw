@@ -160,11 +160,7 @@ subroutine optical_spectrum(is_triplet_currently, basis, occupation, c_matrix, c
         write(unit_yaml, '(12x,a6,a,1x,es18.8)') ADJUSTL(char6), ':', xi_eigenvalue(iexc) * Ha_eV
       enddo
     endif
-
-    do iexc=1, nexc
-      write(char6, '(i6)') iexc
-      write(unit_yaml, '(12x,a6,a,1x,es18.8)') ADJUSTL(char6), ':', eigenvalue(iexc) * Ha_eV
-    enddo
+    
     write(unit_yaml, '(8x,a)') 'oscillator strengths:'
 
   endif
