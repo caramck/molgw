@@ -177,6 +177,10 @@ subroutine optical_spectrum(is_triplet_currently, basis, occupation, c_matrix, c
     if( is_triplet_currently ) then
       oscillator_strength = 0.0_dp
     else
+      write(stdout,'(a)') ' Residue vector:'
+      write(stdout,'(3es16.6)') residue(:,t_jb_global)
+      write(stdout,'(a,es16.6)') ' Dot product * eigenvalue:', &
+           DOT_PRODUCT(residue(:,t_jb_global),residue(:,t_jb_global)) * eigenvalue(t_jb_global)
       oscillator_strength = 2.0_dp/3.0_dp * DOT_PRODUCT(residue(:, t_jb_global), residue(:, t_jb_global)) * eigenvalue(t_jb_global)
     endif
     trk_sumrule = trk_sumrule + oscillator_strength
