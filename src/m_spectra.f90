@@ -160,6 +160,12 @@ subroutine optical_spectrum(is_triplet_currently, basis, occupation, c_matrix, c
         write(unit_yaml, '(12x,a6,a,1x,es18.8)') ADJUSTL(char6), ':', xi_eigenvalue(iexc) * Ha_eV
       enddo
     endif
+
+    write(unit_yaml, '(8x,a)') 'transition dipole vector:'
+    do t_jb_global=1, nexc
+      write(char6, '(i6)') t_jb_global
+      write(unit_yaml, '(12x,a6,a,3(1x,es18.8))') ADJUSTL(char6), ':', residue(:, t_jb_global)
+    enddo
     
     write(unit_yaml, '(8x,a)') 'oscillator strengths:'
 
