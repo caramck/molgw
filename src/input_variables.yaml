@@ -588,6 +588,14 @@ print_w:
   comment: 'Dumps the spectral function of the screened Coulomb W. This is necessary for a subsequent BSE run when no auxiliary basis is used.
             When an auxiliary basis is used, MOLGW quickly recalculates the static polarizability with the sum-over-states formula at the BSE stage.'
 
+print_epsilon:
+  family: io
+  datatype: yes/no
+  mandatory: 'no'
+  experimental: 'no'
+  default: 'no'
+  comment: 'Prints the dielectric matrix to a NumPy binary file called "epsilon.npy".'
+
 print_wfn:
   family: io
   datatype: yes/no
