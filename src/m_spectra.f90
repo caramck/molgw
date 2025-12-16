@@ -162,9 +162,13 @@ subroutine optical_spectrum(is_triplet_currently, basis, occupation, c_matrix, c
     endif
 
     write(unit_yaml, '(8x,a)') 'transition dipole vector:'
+    write(unit_yaml, '(12x,a)') 'units: a.u.'
     do t_jb_global=1, nexc
       write(char6, '(i6)') t_jb_global
-      write(unit_yaml, '(12x,a6,a,3(1x,es18.8))') ADJUSTL(char6), ':', residue(:, t_jb_global)
+      write(unit_yaml, '(12x,a6,a)') ADJUSTL(char6), ':'
+      write(unit_yaml, '(16x,a,1x,es18.8)') 'x:', residue(1, t_jb_global)
+      write(unit_yaml, '(16x,a,1x,es18.8)') 'y:', residue(2, t_jb_global)
+      write(unit_yaml, '(16x,a,1x,es18.8)') 'z:', residue(3, t_jb_global)
     enddo
     
     write(unit_yaml, '(8x,a)') 'oscillator strengths:'
