@@ -88,6 +88,12 @@ subroutine build_amb_apb_common(is_triplet_currently, lambda, nmat, nbf, nstate,
       m_apb_block = row_block_size(nmat, iprow, nprow_sd)
       n_apb_block = col_block_size(nmat, ipcol, npcol_sd)
 
+      if( ALLOCATED(amb_block) ) deallocate(amb_block)
+      if( ALLOCATED(apb_block) ) deallocate(apb_block)
+      if( ALLOCATED(amb_block) ) deallocate(amb_block)
+      if( ALLOCATED(apb_block) ) deallocate(apb_block)
+      if( ALLOCATED(amb_block) ) deallocate(amb_block)
+      if( ALLOCATED(apb_block) ) deallocate(apb_block)
       allocate(amb_block(m_apb_block, n_apb_block))
       allocate(apb_block(m_apb_block, n_apb_block))
       amb_block(:, :) = 0.0_dp
@@ -902,6 +908,8 @@ subroutine build_amb_apb_screened_exchange_auxil(alpha_local, lambda, desc_apb, 
       m_apb_block = row_block_size(nmat, iprow, nprow_sd)
       n_apb_block = col_block_size(nmat, ipcol, npcol_sd)
 
+      if( ALLOCATED(amb_block) ) deallocate(amb_block)
+      if( ALLOCATED(apb_block) ) deallocate(apb_block)
       allocate(amb_block(m_apb_block, n_apb_block))
       allocate(apb_block(m_apb_block, n_apb_block))
       apb_block(:, :) = 0.0_dp
@@ -961,6 +969,8 @@ subroutine build_amb_apb_screened_exchange_auxil(alpha_local, lambda, desc_apb, 
 
       if( iprow == iprow_sd .AND. ipcol == ipcol_sd ) then
         ! Save matrices to temporary local before adding block
+        if( ALLOCATED(amb_matrix_before) ) deallocate(amb_matrix_before)
+        if( ALLOCATED(apb_matrix_before) ) deallocate(apb_matrix_before)
         allocate(amb_matrix_before(m_apb, n_apb))
         allocate(apb_matrix_before(m_apb, n_apb))
         amb_matrix_before = amb_matrix(:,:)
@@ -970,7 +980,12 @@ subroutine build_amb_apb_screened_exchange_auxil(alpha_local, lambda, desc_apb, 
         amb_matrix(:, :) = amb_matrix(:, :) + amb_block(:, :)
         apb_matrix(:, :) = apb_matrix(:, :) + apb_block(:, :)
         
+        deallocate(amb_matrix_before)
+        deallocate(apb_matrix_before)
       endif
+
+      deallocate(amb_block)
+      deallocate(apb_block)
 
     enddo
   enddo
