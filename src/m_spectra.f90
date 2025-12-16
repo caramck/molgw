@@ -162,7 +162,7 @@ subroutine optical_spectrum(is_triplet_currently, basis, occupation, c_matrix, c
     endif
 
     write(unit_yaml, '(8x,a)') 'transition dipole vector:'
-    write(unit_yaml, '(12x,a)') 'units: a.u.'
+    write(unit_yaml, '(12x,a)') 'units: a.u. '
     do t_jb_global=1, nexc
       write(char6, '(i6)') t_jb_global
       write(unit_yaml, '(12x,a6,a)') ADJUSTL(char6), ':'
