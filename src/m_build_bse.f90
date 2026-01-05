@@ -984,12 +984,8 @@ subroutine build_amb_apb_screened_exchange_auxil(alpha_local, lambda, desc_apb, 
         deallocate(apb_matrix_before)
       endif
 
-<<<<<<< HEAD
       deallocate(amb_block)
       deallocate(apb_block)
-=======
-
->>>>>>> 92290b9a (update to add the print_xi variable as a new input variable, pass the amb and apb blocks from the BSE, and calculate the eigenvalues after matrix diagonalization from just the BSE blocks. print the xi eigenvalues to the yaml file.)
 
     enddo
   enddo
