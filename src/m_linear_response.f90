@@ -49,8 +49,10 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
   real(dp)                  :: alpha_local, lambda_
   real(dp), allocatable      :: amb_diag_rpa(:)
   real(dp), allocatable      :: amb_matrix(:, :), apb_matrix(:, :)
+  real(dp), allocatable      :: amb_block(:,:), apb_block(:,:)
   real(dp), allocatable      :: xpy_matrix(:, :), xmy_matrix(:, :)
   real(dp), allocatable      :: eigenvalue(:)
+  real(dp), allocatable      :: xi_eigenval(:)
   real(dp), allocatable      :: energy_qp(:, :)
   logical                   :: is_tddft, is_rpa, long_range_true=.true.
   logical                   :: has_manual_tdhf
@@ -61,6 +63,7 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
   integer                   :: desc_apb(NDEL), desc_x(NDEL)
   integer                   :: info
   logical                   :: is_triplet_currently
+  integer                   :: t_ia, t_jb, t_kb
   !=====
 
   call start_clock(timing_pola)
@@ -232,7 +235,6 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
   write(stdout, '(/,a)') ' Build the electron-hole hamiltonian'
 
   if( has_auxil_basis) then
-
     !
     ! Step 1
     call build_amb_apb_diag_auxil(nmat, nstate, energy_qp, wpol_out, m_apb, n_apb, amb_matrix, apb_matrix, amb_diag_rpa)
@@ -242,7 +244,6 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
 #else
     call build_apb_hartree_auxil(is_triplet_currently, lambda_, desc_apb, wpol_out, m_apb, n_apb, apb_matrix)
 #endif
-
 
     !
     ! Step 2
@@ -255,7 +256,7 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
     ! Step 3
     if(alpha_local > 1.0e-6_dp) then
       call build_amb_apb_screened_exchange_auxil(alpha_local, lambda_, desc_apb, wpol_out, wpol_static, &
-                                                 m_apb, n_apb, amb_matrix, apb_matrix)
+                                                 m_apb, n_apb, amb_matrix, apb_matrix, amb_block, apb_block)
     else
       write(stdout, '(a,f8.3)') ' Content of Exchange: ', alpha_local
     endif
@@ -301,7 +302,10 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
     ! Tamm-Dancoff approximation consists in setting B matrix to zero
     ! Then A+B = A-B = A
     apb_matrix(:, :) = 0.5_dp * ( apb_matrix(:, :) + amb_matrix(:, :) )
+
+
     amb_matrix(:, :) = apb_matrix(:, :)
+
   endif
   ! Construction done!
   !if(has_auxil_basis) call destroy_eri_3center_eigen()
@@ -340,6 +344,7 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
   if( nexc == 0 ) nexc = nmat
 
   allocate(eigenvalue(nexc))
+  allocate(xi_eigenval(nexc))
 
   ! Allocate (X+Y)
   ! Allocate (X-Y) only if actually needed
@@ -359,7 +364,6 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
     if( nexcitation == 0 ) then
       ! The following call works with AND without SCALAPACK
       call diago_4blocks_chol(amb_matrix, apb_matrix, desc_apb, eigenvalue, xpy_matrix, xmy_matrix, desc_x)
-
     else ! Partial diagonalization with Davidson
       ! The following call works with AND without SCALAPACK
       call diago_4blocks_davidson(toldav, nstep_dav, amb_diag_rpa, amb_matrix, apb_matrix, desc_apb, &
@@ -370,6 +374,34 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
     call diago_4blocks_rpa_sca(amb_diag_rpa, apb_matrix, desc_apb, eigenvalue, xpy_matrix, desc_x)
   endif
 
+  ! After Diagonalization
+  ! Calculate xi_eigenvalue array from amb_block and apb_block using x+y and x-y matrices
+  ! Only calculate when we have screened exchange contribution
+  if(alpha_local > 1.0e-6_dp .AND. allocated(apb_block) .AND. allocated(amb_block)) then
+    xi_eigenval(:) = 0.0_dp
+
+    do t_ia=1,nexc
+      ! For each eigenvalue, calculate expectation value using x+y and x-y matrices
+      do t_jb=1,n_x
+        do t_kb=1,n_x
+          ! Contribution from A+B block
+          xi_eigenval(t_ia) = xi_eigenval(t_ia) + &
+            0.5_dp * xpy_matrix(t_jb,t_ia) * apb_block(t_jb,t_kb) * xpy_matrix(t_kb,t_ia)
+          
+          ! Contribution from A-B block  
+          xi_eigenval(t_ia) = xi_eigenval(t_ia) + &
+            0.5_dp * xmy_matrix(t_jb,t_ia) * amb_block(t_jb,t_kb) * xmy_matrix(t_kb,t_ia)
+        enddo
+      enddo
+    enddo
+
+    ! Deallocate amb block and apb block matrices
+    deallocate(amb_block)
+    deallocate(apb_block)
+  else
+    ! When no screened exchange or blocks not allocated, set xi_eigenval to zero
+    xi_eigenval(:) = 0.0_dp
+  endif
 
   ! Deallocate the non-necessary matrices
   deallocate(amb_diag_rpa)
@@ -379,7 +411,6 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
   ! (A-B) may have been already deallocated earlier in the case of RPA
   ! Relax: this is indeed tolerated by clean_deallocate
   call clean_deallocate('A-B', amb_matrix)
-
 
   !
   ! Second part of the RPA correlation energy: sum over positive eigenvalues
@@ -399,7 +430,7 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
   ! and the dynamic dipole tensor
   !
   if( is_tdhf .OR. is_tddft .OR. is_bse ) then
-    call optical_spectrum(is_triplet_currently, basis, occupation, c_matrix, wpol_out, xpy_matrix, xmy_matrix, eigenvalue)
+    call optical_spectrum(is_triplet_currently, basis, occupation, c_matrix, wpol_out, xpy_matrix, xmy_matrix, eigenvalue, xi_eigenval)
     select case(TRIM(lower(stopping)))
     case('spherical')
       call stopping_power(basis, c_matrix, wpol_out, xpy_matrix, eigenvalue)
@@ -408,10 +439,21 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
     end select
   endif
 
+  ! Deallocate xi_eigenval array
+  deallocate(xi_eigenval)
+
   ! extract X and Y if requested
   if( PRESENT(x_matrix) ) then
     x_matrix(:, :) = 0.5_dp * ( xpy_matrix(:, :) + xmy_matrix(:, :) )
   endif
+
+  if( PRESENT(x_matrix) ) then
+    write(stdout,'(/,a)') ' X matrix after diagonalization:'
+    do t_ia=1,SIZE(x_matrix,1)
+      write(stdout,'(100f12.6)') (x_matrix(t_ia,t_jb), t_jb=1,SIZE(x_matrix,2))
+    enddo
+  endif
+
   if( PRESENT(y_matrix) ) then
     y_matrix(:, :) = 0.5_dp * ( xpy_matrix(:, :) - xmy_matrix(:, :) )
   endif

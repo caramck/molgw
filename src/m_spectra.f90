@@ -30,7 +30,7 @@ contains
 
 
 !=========================================================================
-subroutine optical_spectrum(is_triplet_currently, basis, occupation, c_matrix, chi, xpy_matrix, xmy_matrix, eigenvalue)
+subroutine optical_spectrum(is_triplet_currently, basis, occupation, c_matrix, chi, xpy_matrix, xmy_matrix, eigenvalue, xi_eigenvalue)
   implicit none
 
   logical, intent(in)                 :: is_triplet_currently
@@ -40,6 +40,7 @@ subroutine optical_spectrum(is_triplet_currently, basis, occupation, c_matrix, c
   real(dp), intent(in)                :: xpy_matrix(:, :)
   real(dp), intent(in)                :: xmy_matrix(:, :)
   real(dp), intent(in)                :: eigenvalue(:)
+  real(dp), intent(in)                :: xi_eigenvalue(:)
   !=====
   integer                            :: nstate, m_x, n_x
   integer                            :: gt
@@ -150,7 +151,28 @@ subroutine optical_spectrum(is_triplet_currently, basis, occupation, c_matrix, c
       write(char6, '(i6)') iexc
       write(unit_yaml, '(12x,a6,a,1x,es18.8)') ADJUSTL(char6), ':', eigenvalue(iexc) * Ha_eV
     enddo
+    
+    ! If print_xi variable is set to 'yes':
+    if(print_xi_) then
+      write(unit_yaml, '(8x,a)') 'bse xi contribution, eV:'
+      do iexc=1, nexc
+        write(char6, '(i6)') iexc
+        write(unit_yaml, '(12x,a6,a,1x,es18.8)') ADJUSTL(char6), ':', xi_eigenvalue(iexc) * Ha_eV
+      enddo
+    endif
+
+    write(unit_yaml, '(8x,a)') 'transition dipole vector:'
+    write(unit_yaml, '(12x,a)') 'units: a.u. '
+    do t_jb_global=1, nexc
+      write(char6, '(i6)') t_jb_global
+      write(unit_yaml, '(12x,a6,a)') ADJUSTL(char6), ':'
+      write(unit_yaml, '(16x,a,1x,es18.8)') 'x:', residue(1, t_jb_global)
+      write(unit_yaml, '(16x,a,1x,es18.8)') 'y:', residue(2, t_jb_global)
+      write(unit_yaml, '(16x,a,1x,es18.8)') 'z:', residue(3, t_jb_global)
+    enddo
+    
     write(unit_yaml, '(8x,a)') 'oscillator strengths:'
+
   endif
 
   write(stdout, '(/,5x,a)') 'Excitation energies (eV)     Oscil. strengths   [Symmetry] '
@@ -237,7 +259,7 @@ subroutine optical_spectrum(is_triplet_currently, basis, occupation, c_matrix, c
         if( t_jb /= 0 ) then
           ! Resonant
           coeff(                 t_ia_global) = 0.5_dp * ( xpy_matrix(t_ia, t_jb) + xmy_matrix(t_ia, t_jb) ) / SQRT(2.0_dp)
-          ! Anti-Resonant
+          ! Anti-Resonant  
           coeff(chi%npole_reso + t_ia_global) = 0.5_dp * ( xpy_matrix(t_ia, t_jb) - xmy_matrix(t_ia, t_jb) ) / SQRT(2.0_dp)
           xpy_global(            t_ia_global) = xpy_matrix(t_ia, t_jb)
         endif
@@ -317,7 +339,7 @@ subroutine optical_spectrum(is_triplet_currently, basis, occupation, c_matrix, c
           write(stdout, '(8x,i4,a,i4,1x,f12.5)') istate, ' <- ', astate, coeff(chi%npole_reso+t_ia_global)
       enddo
 
-      write(stdout, *)
+      
 
     endif
   enddo

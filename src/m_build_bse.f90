@@ -21,11 +21,6 @@ module m_build_bse
   use m_eri_ao_mo
   use m_dft_grid
   use m_tddft_fxc
-
-
-  
-
-
 contains
 
 
@@ -58,6 +53,8 @@ subroutine build_amb_apb_common(is_triplet_currently, lambda, nmat, nbf, nstate,
   integer              :: m_apb_block, n_apb_block
   real(dp), allocatable :: amb_block(:, :)
   real(dp), allocatable :: apb_block(:, :)
+  real(dp), allocatable :: amb_matrix_before(:, :)
+  real(dp), allocatable :: apb_matrix_before(:, :)
   !=====
 
   call start_clock(timing_build_common)
@@ -91,6 +88,12 @@ subroutine build_amb_apb_common(is_triplet_currently, lambda, nmat, nbf, nstate,
       m_apb_block = row_block_size(nmat, iprow, nprow_sd)
       n_apb_block = col_block_size(nmat, ipcol, npcol_sd)
 
+      if( ALLOCATED(amb_block) ) deallocate(amb_block)
+      if( ALLOCATED(apb_block) ) deallocate(apb_block)
+      if( ALLOCATED(amb_block) ) deallocate(amb_block)
+      if( ALLOCATED(apb_block) ) deallocate(apb_block)
+      if( ALLOCATED(amb_block) ) deallocate(amb_block)
+      if( ALLOCATED(apb_block) ) deallocate(apb_block)
       allocate(amb_block(m_apb_block, n_apb_block))
       allocate(apb_block(m_apb_block, n_apb_block))
       amb_block(:, :) = 0.0_dp
@@ -177,14 +180,17 @@ subroutine build_amb_apb_common(is_triplet_currently, lambda, nmat, nbf, nstate,
       call auxil%sum(amb_block)
       call auxil%sum(apb_block)
 
-      if( iprow == iprow_sd .AND. ipcol == ipcol_sd ) then
-        amb_matrix(:, :) = amb_block(:, :)
-        apb_matrix(:, :) = apb_block(:, :)
-      endif
 
+      if( iprow == iprow_sd .AND. ipcol == ipcol_sd ) then
+        ! Add blocks to matrices
+        amb_matrix(:, :) = amb_matrix(:, :) + amb_block(:, :)
+        apb_matrix(:, :) = apb_matrix(:, :) + apb_block(:, :)
+        
+      endif
 
       deallocate(amb_block)
       deallocate(apb_block)
+
     enddo
   enddo
 
@@ -205,7 +211,6 @@ subroutine build_amb_apb_common(is_triplet_currently, lambda, nmat, nbf, nstate,
   !$OMP END PARALLEL DO
 
   if(ALLOCATED(eri_eigenstate_jbmin)) deallocate(eri_eigenstate_jbmin)
-
 
   call stop_clock(timing_build_common)
 
@@ -229,6 +234,7 @@ subroutine build_amb_apb_diag_auxil(nmat, nstate, energy, wpol, m_apb, n_apb, am
   !=====
 
   write(stdout, '(a)') ' Build diagonal part with auxil basis: Energies'
+  write(stdout,'(a,i8)') ' Number of matrix elements (nmat): ', nmat
 
   do t_jb_global=1, nmat
     t_ia = rowindex_global_to_local('S', t_jb_global)
@@ -237,6 +243,7 @@ subroutine build_amb_apb_diag_auxil(nmat, nstate, energy, wpol, m_apb, n_apb, am
     jstate = wpol%transition_table(1, t_jb_global)
     bstate = wpol%transition_table(2, t_jb_global)
     jbspin = wpol%transition_table(3, t_jb_global)
+ 
     amb_diag_rpa(t_jb_global) = energy(bstate, jbspin) - energy(jstate, jbspin)
 
     ! If the diagonal element belongs to this proc, then add it.
@@ -244,6 +251,7 @@ subroutine build_amb_apb_diag_auxil(nmat, nstate, energy, wpol, m_apb, n_apb, am
       apb_matrix(t_ia, t_jb) =  amb_diag_rpa(t_jb_global)
       amb_matrix(t_ia, t_jb) =  amb_diag_rpa(t_jb_global)
     endif
+
   enddo
 
 
@@ -683,7 +691,7 @@ end subroutine build_amb_apb_bse
 
 !=========================================================================
 subroutine build_amb_apb_screened_exchange_auxil(alpha_local, lambda, desc_apb, wpol, wpol_static, m_apb, n_apb, &
-                                                 amb_matrix, apb_matrix)
+                                                 amb_matrix, apb_matrix, amb_block, apb_block)
   implicit none
 
   real(dp), intent(in)                :: alpha_local, lambda
@@ -691,6 +699,7 @@ subroutine build_amb_apb_screened_exchange_auxil(alpha_local, lambda, desc_apb, 
   type(spectral_function), intent(in) :: wpol, wpol_static
   integer, intent(in)                 :: m_apb, n_apb
   real(dp), intent(inout)             :: amb_matrix(m_apb, n_apb), apb_matrix(m_apb, n_apb)
+  real(dp), allocatable, intent(out)  :: amb_block(:,:), apb_block(:,:)
   !=====
   logical              :: is_bse
   integer              :: nmat
@@ -703,8 +712,8 @@ subroutine build_amb_apb_screened_exchange_auxil(alpha_local, lambda, desc_apb, 
   real(dp), allocatable :: wp0(:, :, :, :), wp0_lr(:, :, :, :), w0_local(:)
   integer              :: iprow, ipcol, irank
   integer              :: m_apb_block, n_apb_block
-  real(dp), allocatable :: amb_block(:, :)
-  real(dp), allocatable :: apb_block(:, :)
+  real(dp), allocatable :: amb_matrix_before(:, :)
+  real(dp), allocatable :: apb_matrix_before(:, :)
 #if defined(HAVE_SCALAPACK)
   real(dp), allocatable :: vsqrt_chi_vsqrt_i(:), residue_i(:), wp0_i(:, :)
 #else
@@ -899,6 +908,8 @@ subroutine build_amb_apb_screened_exchange_auxil(alpha_local, lambda, desc_apb, 
       m_apb_block = row_block_size(nmat, iprow, nprow_sd)
       n_apb_block = col_block_size(nmat, ipcol, npcol_sd)
 
+      if( ALLOCATED(amb_block) ) deallocate(amb_block)
+      if( ALLOCATED(apb_block) ) deallocate(apb_block)
       allocate(amb_block(m_apb_block, n_apb_block))
       allocate(apb_block(m_apb_block, n_apb_block))
       apb_block(:, :) = 0.0_dp
@@ -957,12 +968,24 @@ subroutine build_amb_apb_screened_exchange_auxil(alpha_local, lambda, desc_apb, 
       call world%sum(apb_block)
 
       if( iprow == iprow_sd .AND. ipcol == ipcol_sd ) then
+        ! Save matrices to temporary local before adding block
+        if( ALLOCATED(amb_matrix_before) ) deallocate(amb_matrix_before)
+        if( ALLOCATED(apb_matrix_before) ) deallocate(apb_matrix_before)
+        allocate(amb_matrix_before(m_apb, n_apb))
+        allocate(apb_matrix_before(m_apb, n_apb))
+        amb_matrix_before = amb_matrix(:,:)
+        apb_matrix_before = apb_matrix(:,:)
+
+        ! Add blocks to matrices
         amb_matrix(:, :) = amb_matrix(:, :) + amb_block(:, :)
         apb_matrix(:, :) = apb_matrix(:, :) + apb_block(:, :)
+        
+        deallocate(amb_matrix_before)
+        deallocate(apb_matrix_before)
       endif
+
       deallocate(amb_block)
       deallocate(apb_block)
-
 
     enddo
   enddo

@@ -73,6 +73,7 @@ subroutine selfenergy_evaluation(basis, occupation, energy, c_matrix, exchange_m
 
 
   do istep_gw=1, nstep_gw
+    write(stdout,'(/,1x,a,i3,a,a)') 'Self-energy iteration ', istep_gw, ' of ', TRIM(selfenergy_tag)
 
     !
     ! Set the character string for the calculation we are currently doing

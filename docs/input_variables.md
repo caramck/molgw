@@ -188,6 +188,7 @@
 [print_density_matrix](#print_density_matrix)
 [print_eri](#print_eri)
 [print_hartree](#print_hartree)
+[print_xi](#print_xi)
 [print_multipole](#print_multipole)
 [print_pdos](#print_pdos)
 [print_restart](#print_restart)
