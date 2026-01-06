@@ -473,6 +473,7 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
       call chi_to_sqrtvchisqrtv_auxil(desc_x, xpy_matrix, eigenvalue, wpol_out, en_gw)
       if( print_chi_ ) then
         call dump_chi_hdf5(wpol_out)
+        call dump_auxil_basis_hdf5()
       endif
       ! This following coding of the Galitskii-Migdal correlation energy is only working with
       ! an auxiliary basis
@@ -982,6 +983,94 @@ subroutine dump_chi_hdf5(sf)
 #endif
 
 end subroutine dump_chi_hdf5
+
+
+!=========================================================================
+subroutine dump_auxil_basis_hdf5()
+  implicit none
+#if defined(HAVE_HDF5)
+  type(basis_set), pointer :: aux
+  integer(HID_T)           :: fid
+  integer                  :: nshell, max_prim, ishell, ig, nbf, ifunc
+  real(dp), allocatable    :: centers(:, :)
+  real(dp), allocatable    :: exponent_array(:, :), coeff_array(:, :)
+  integer, allocatable     :: center_index(:), am_shell(:), nprimitive(:), istart(:), iend(:)
+  integer, allocatable     :: function_shell(:), function_local(:), function_center(:), function_am(:), function_order(:)
+
+  if( .NOT. has_auxil_basis ) return
+  if( .NOT. ASSOCIATED(auxil_basis_ptr) ) then
+    if( is_iomaster ) call issue_warning('dump_auxil_basis_hdf5: auxiliary basis not registered')
+    return
+  endif
+
+  aux => auxil_basis_ptr
+  nshell = aux%nshell
+  if( nshell <= 0 ) return
+  max_prim = MAXVAL(aux%shell(:)%ng)
+  if( max_prim <= 0 ) max_prim = 1
+
+  allocate(centers(nshell, 3))
+  allocate(center_index(nshell), am_shell(nshell), nprimitive(nshell))
+  allocate(istart(nshell), iend(nshell))
+  allocate(exponent_array(max_prim, nshell))
+  allocate(coeff_array(max_prim, nshell))
+
+  exponent_array(:, :) = 0.0_dp
+  coeff_array(:, :)    = 0.0_dp
+
+  do ishell=1, nshell
+    centers(ishell, :)      = aux%shell(ishell)%x0(:)
+    center_index(ishell)    = aux%shell(ishell)%icenter
+    am_shell(ishell)        = aux%shell(ishell)%am
+    nprimitive(ishell)      = aux%shell(ishell)%ng
+    istart(ishell)          = aux%shell(ishell)%istart
+    iend(ishell)            = aux%shell(ishell)%iend
+    do ig=1, aux%shell(ishell)%ng
+      exponent_array(ig, ishell) = aux%shell(ishell)%alpha(ig)
+      coeff_array(ig, ishell)    = aux%shell(ishell)%coeff(ig)
+    enddo
+  enddo
+
+  nbf = aux%nbf
+  if( nbf <= 0 ) then
+    if( is_iomaster ) call issue_warning('dump_auxil_basis_hdf5: auxiliary basis has no functions to export')
+    deallocate(centers, center_index, am_shell, nprimitive, istart, iend, exponent_array, coeff_array)
+    return
+  endif
+
+  allocate(function_shell(nbf), function_local(nbf), function_center(nbf), function_am(nbf), function_order(nbf))
+  do ifunc=1, nbf
+    function_shell(ifunc) = aux%bff(ifunc)%shell_index
+    function_local(ifunc) = aux%bff(ifunc)%index_in_shell
+    function_center(ifunc)= aux%bff(ifunc)%icenter
+    function_am(ifunc)    = aux%bff(ifunc)%am
+    function_order(ifunc) = ifunc
+  enddo
+
+  call hdf_open_file(fid, 'auxil_basis', status='NEW')
+  call hdf_write_dataset(fid, 'gaussian_type', TRIM(aux%gaussian_type))
+  call hdf_write_dataset(fid, 'shell_centers', centers)
+  call hdf_write_dataset(fid, 'shell_center_index', center_index)
+  call hdf_write_dataset(fid, 'shell_angular_momentum', am_shell)
+  call hdf_write_dataset(fid, 'shell_nprimitive', nprimitive)
+  call hdf_write_dataset(fid, 'shell_exponents', exponent_array)
+  call hdf_write_dataset(fid, 'shell_coefficients', coeff_array)
+  call hdf_write_dataset(fid, 'shell_istart', istart)
+  call hdf_write_dataset(fid, 'shell_iend', iend)
+  call hdf_write_dataset(fid, 'function_order', function_order)
+  call hdf_write_dataset(fid, 'function_shell_index', function_shell)
+  call hdf_write_dataset(fid, 'function_local_index', function_local)
+  call hdf_write_dataset(fid, 'function_center_index', function_center)
+  call hdf_write_dataset(fid, 'function_angular_momentum', function_am)
+  call hdf_close_file(fid)
+
+  deallocate(centers, center_index, am_shell, nprimitive, istart, iend, exponent_array, coeff_array)
+  deallocate(function_shell, function_local, function_center, function_am, function_order)
+#else
+  if( is_iomaster ) call issue_warning('dump_auxil_basis_hdf5: HDF5 support is required to print auxiliary basis information')
+#endif
+
+end subroutine dump_auxil_basis_hdf5
 
 
 !=========================================================================

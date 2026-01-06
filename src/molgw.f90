@@ -68,7 +68,7 @@ program molgw
 
   !=====
   type(basis_set)            :: basis
-  type(basis_set)            :: auxil_basis
+  type(basis_set), target    :: auxil_basis
   type(spectral_function)    :: wpol
   type(lbfgs_state)          :: lbfgs_plan
   type(energy_contributions) :: en_gks, en_mbpt, en_noft
@@ -220,6 +220,9 @@ program molgw
         call init_basis_set(basis_path, auxil_basis_name, ecp_auxil_basis_name, gaussian_type, &
                             even_tempered_alpha, even_tempered_beta, even_tempered_n_list, auxil_basis)
       endif
+      auxil_basis_ptr => auxil_basis
+    else
+      nullify(auxil_basis_ptr)
     endif
 
 #if defined(HAVE_LIBCINT)
@@ -516,7 +519,10 @@ program molgw
           call clean_deallocate('Wavefunctions C', c_matrix)
           deallocate(energy, occupation)
           call destroy_basis_set(basis)
-          if(has_auxil_basis) call destroy_basis_set(auxil_basis)
+          if(has_auxil_basis) then
+            call destroy_basis_set(auxil_basis)
+            nullify(auxil_basis_ptr)
+          endif
         endif
       endif
     endif
@@ -865,7 +871,10 @@ program molgw
   if( has_auxil_basis .AND. calc_type%is_lr_mbpt ) call destroy_eri_3center_lr()
 
   call destroy_basis_set(basis)
-  if(has_auxil_basis) call destroy_basis_set(auxil_basis)
+  if(has_auxil_basis) then
+    call destroy_basis_set(auxil_basis)
+    nullify(auxil_basis_ptr)
+  endif
   call destroy_atoms()
 
 #if defined(HAVE_LIBCINT)
