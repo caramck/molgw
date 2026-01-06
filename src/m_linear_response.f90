@@ -20,8 +20,10 @@ module m_linear_response
   use m_basis_set
   use m_spectral_function
   use m_eri_ao_mo
+  use m_eri, only: iproc_ibf_auxil, ibf_auxil_l
   use m_spectra
   use m_build_bse
+  use m_hdf5_tools
 
 contains
 
@@ -469,6 +471,9 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
   if( print_w_ .OR. calculate_w ) then
     if( has_auxil_basis) then
       call chi_to_sqrtvchisqrtv_auxil(desc_x, xpy_matrix, eigenvalue, wpol_out, en_gw)
+      if( print_chi_ ) then
+        call dump_chi_hdf5(wpol_out)
+      endif
       ! This following coding of the Galitskii-Migdal correlation energy is only working with
       ! an auxiliary basis
       if( is_rpa ) then
@@ -931,6 +936,52 @@ subroutine chi_to_sqrtvchisqrtv_auxil(desc_x, xpy_matrix, eigenvalue, wpol, ener
   call stop_clock(timing_vchiv)
 
 end subroutine chi_to_sqrtvchisqrtv_auxil
+
+
+!=========================================================================
+subroutine dump_chi_hdf5(sf)
+  implicit none
+  type(spectral_function), intent(in) :: sf
+#if defined(HAVE_HDF5)
+  integer(HID_T)        :: fid
+  real(dp), allocatable :: residue_all(:, :)
+  real(dp), allocatable :: local_row(:)
+  integer               :: ibf_auxil, owner_rank
+  character(len=*), parameter :: chi_filename = 'wpol_sqrtvchisqrtv'
+
+  if( .NOT. has_auxil_basis ) return
+
+  allocate(local_row(sf%npole_reso))
+  if( is_iomaster ) then
+    call clean_allocate('Chi residues (global)', residue_all, sf%nprodbasis_total, sf%npole_reso)
+  endif
+
+  do ibf_auxil=1, sf%nprodbasis_total
+    owner_rank = iproc_ibf_auxil(ibf_auxil)
+    local_row(:) = 0.0_dp
+    if( auxil%rank == owner_rank ) then
+      local_row(:) = sf%residue_left(ibf_auxil_l(ibf_auxil), :)
+    endif
+    call auxil%bcast(owner_rank, local_row)
+    if( is_iomaster ) residue_all(ibf_auxil, :) = local_row(:)
+  enddo
+
+  if( is_iomaster ) then
+    call hdf_open_file(fid, chi_filename, status='NEW')
+    call hdf_write_dataset(fid, 'poles', sf%pole)
+    call hdf_write_dataset(fid, 'residue_left', residue_all)
+    call hdf_close_file(fid)
+    call clean_deallocate('Chi residues (global)', residue_all)
+  endif
+
+  deallocate(local_row)
+#else
+  if( is_iomaster ) then
+    call issue_warning('dump_chi_hdf5: HDF5 support is required to print chi in HDF5 format')
+  endif
+#endif
+
+end subroutine dump_chi_hdf5
 
 
 !=========================================================================
