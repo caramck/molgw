@@ -524,6 +524,14 @@ print_xi:
   default: 'no'
   comment: Prints the BSE kernel expectation value to the yaml file.
 
+print_chi:
+  family: io
+  datatype: yes/no
+  mandatory: 'no'
+  experimental: 'no'
+  default: 'no'
+  comment: Prints the RPA polarizability to a text file.
+
 print_multipole:
   family: io
   datatype: yes/no
