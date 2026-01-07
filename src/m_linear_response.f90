@@ -958,7 +958,7 @@ subroutine dump_chi_binary(sf)
 #if !defined(HAVE_MPI)
   if( .NOT. is_iomaster ) return
 
-  open(newunit=unit_chi, file='wpol_sqrtvchisqrtv', form='unformatted', status='replace', action='write')
+  open(newunit=unit_chi, file='sqVCHIsqV', form='unformatted', status='replace', action='write')
   write(unit_chi) sf%npole_reso, sf%nprodbasis_total
   write(unit_chi) sf%pole
   do ibf_auxil=1, sf%nprodbasis_total
@@ -1095,7 +1095,7 @@ subroutine dump_auxil_basis_binary()
 
 #else
 
-  call MPI_FILE_OPEN(MPI_COMM_WORLD, 'auxil_basis', MPI_MODE_WRONLY + MPI_MODE_CREATE, MPI_INFO_NULL, wfile, ierr)
+  call MPI_FILE_OPEN(MPI_COMM_WORLD, 'AUXIL_BASIS', MPI_MODE_WRONLY + MPI_MODE_CREATE, MPI_INFO_NULL, wfile, ierr)
 
   disp = 0_MPI_OFFSET_KIND
   if( master ) then
