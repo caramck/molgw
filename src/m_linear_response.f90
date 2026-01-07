@@ -943,35 +943,62 @@ end subroutine chi_to_sqrtvchisqrtv_auxil
 subroutine dump_chi_binary(sf)
   implicit none
   type(spectral_function), intent(in) :: sf
-  real(dp), allocatable :: residue_all(:, :)
-  real(dp), allocatable :: local_row(:)
-  integer               :: ibf_auxil, owner_rank
+  integer               :: ibf_auxil
+#if !defined(HAVE_MPI)
   integer               :: unit_chi
+#else
+  integer               :: wfile
+  integer               :: ierr
+  integer(kind=MPI_OFFSET_KIND) :: disp
+  real(dp), allocatable :: buffer(:)
+#endif
 
   if( .NOT. has_auxil_basis ) return
+
+#if !defined(HAVE_MPI)
   if( .NOT. is_iomaster ) return
-
-  allocate(local_row(sf%npole_reso))
-  call clean_allocate('Chi residues (global)', residue_all, sf%nprodbasis_total, sf%npole_reso)
-
-  do ibf_auxil=1, sf%nprodbasis_total
-    owner_rank = iproc_ibf_auxil(ibf_auxil)
-    local_row(:) = 0.0_dp
-    if( auxil%rank == owner_rank ) then
-      local_row(:) = sf%residue_left(ibf_auxil_l(ibf_auxil), :)
-    endif
-    call auxil%bcast(owner_rank, local_row)
-    residue_all(ibf_auxil, :) = local_row(:)
-  enddo
 
   open(newunit=unit_chi, file='wpol_sqrtvchisqrtv', form='unformatted', status='replace', action='write')
   write(unit_chi) sf%npole_reso, sf%nprodbasis_total
   write(unit_chi) sf%pole
-  write(unit_chi) residue_all
+  do ibf_auxil=1, sf%nprodbasis_total
+    write(unit_chi) sf%residue_left(ibf_auxil, :)
+  enddo
   close(unit_chi)
 
-  call clean_deallocate('Chi residues (global)', residue_all)
-  deallocate(local_row)
+#else
+
+  call MPI_FILE_OPEN(MPI_COMM_WORLD, 'wpol_sqrtvchisqrtv', MPI_MODE_WRONLY + MPI_MODE_CREATE, MPI_INFO_NULL, wfile, ierr)
+
+  disp = 0_MPI_OFFSET_KIND
+  if( is_iomaster ) then
+    call MPI_FILE_WRITE_AT(wfile, disp, sf%npole_reso, 1, MPI_INTEGER, MPI_STATUS_IGNORE, ierr)
+  endif
+  disp = disp + STORAGE_SIZE(sf%npole_reso)
+
+  if( is_iomaster ) then
+    call MPI_FILE_WRITE_AT(wfile, disp, sf%nprodbasis_total, 1, MPI_INTEGER, MPI_STATUS_IGNORE, ierr)
+  endif
+  disp = disp + STORAGE_SIZE(sf%nprodbasis_total)
+
+  if( is_iomaster ) then
+    call MPI_FILE_WRITE_AT(wfile, disp, sf%pole, sf%npole_reso, MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, ierr)
+  endif
+  disp = disp + sf%npole_reso * STORAGE_SIZE(sf%pole(1))
+
+  allocate(buffer(sf%npole_reso))
+  do ibf_auxil=1, sf%nprodbasis_total
+    if( auxil%rank == iproc_ibf_auxil(ibf_auxil) ) then
+      buffer(:) = sf%residue_left(ibf_auxil_l(ibf_auxil), :)
+      call MPI_FILE_WRITE_AT(wfile, disp, buffer, sf%npole_reso, MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, ierr)
+    endif
+    disp = disp + sf%npole_reso * STORAGE_SIZE(sf%residue_left(1, 1))
+  enddo
+  deallocate(buffer)
+
+  call MPI_FILE_CLOSE(wfile, ierr)
+
+#endif
 
 end subroutine dump_chi_binary
 
@@ -985,14 +1012,20 @@ subroutine dump_auxil_basis_binary()
   real(dp), allocatable    :: exponent_array(:, :), coeff_array(:, :)
   integer, allocatable     :: center_index(:), am_shell(:), nprimitive(:), istart(:), iend(:)
   integer, allocatable     :: function_shell(:), function_local(:), function_center(:), function_am(:), function_order(:)
+  logical                  :: master
+#if !defined(HAVE_MPI)
   integer                  :: unit_aux
+#else
+  integer                  :: wfile, ierr
+  integer(kind=MPI_OFFSET_KIND) :: disp
+#endif
 
   if( .NOT. has_auxil_basis ) return
+  master = is_iomaster
   if( .NOT. ASSOCIATED(auxil_basis_ptr) ) then
-    if( is_iomaster ) call issue_warning('dump_auxil_basis_binary: auxiliary basis not registered')
+    if( master ) call issue_warning('dump_auxil_basis_binary: auxiliary basis not registered')
     return
   endif
-  if( .NOT. is_iomaster ) return
 
   aux => auxil_basis_ptr
   nshell = aux%nshell
@@ -1000,43 +1033,47 @@ subroutine dump_auxil_basis_binary()
   max_prim = MAXVAL(aux%shell(:)%ng)
   if( max_prim <= 0 ) max_prim = 1
 
-  allocate(centers(nshell, 3))
-  allocate(center_index(nshell), am_shell(nshell), nprimitive(nshell))
-  allocate(istart(nshell), iend(nshell))
-  allocate(exponent_array(max_prim, nshell))
-  allocate(coeff_array(max_prim, nshell))
-
-  exponent_array(:, :) = 0.0_dp
-  coeff_array(:, :)    = 0.0_dp
-
-  do ishell=1, nshell
-    centers(ishell, :)      = aux%shell(ishell)%x0(:)
-    center_index(ishell)    = aux%shell(ishell)%icenter
-    am_shell(ishell)        = aux%shell(ishell)%am
-    nprimitive(ishell)      = aux%shell(ishell)%ng
-    istart(ishell)          = aux%shell(ishell)%istart
-    iend(ishell)            = aux%shell(ishell)%iend
-    do ig=1, aux%shell(ishell)%ng
-      exponent_array(ig, ishell) = aux%shell(ishell)%alpha(ig)
-      coeff_array(ig, ishell)    = aux%shell(ishell)%coeff(ig)
-    enddo
-  enddo
-
   nbf = aux%nbf
   if( nbf <= 0 ) then
-    if( is_iomaster ) call issue_warning('dump_auxil_basis_binary: auxiliary basis has no functions to export')
-    deallocate(centers, center_index, am_shell, nprimitive, istart, iend, exponent_array, coeff_array)
+    if( master ) call issue_warning('dump_auxil_basis_binary: auxiliary basis has no functions to export')
     return
   endif
 
-  allocate(function_shell(nbf), function_local(nbf), function_center(nbf), function_am(nbf), function_order(nbf))
-  do ifunc=1, nbf
-    function_shell(ifunc) = aux%bff(ifunc)%shell_index
-    function_local(ifunc) = aux%bff(ifunc)%index_in_shell
-    function_center(ifunc)= aux%bff(ifunc)%icenter
-    function_am(ifunc)    = aux%bff(ifunc)%am
-    function_order(ifunc) = ifunc
-  enddo
+  if( master ) then
+    allocate(centers(nshell, 3))
+    allocate(center_index(nshell), am_shell(nshell), nprimitive(nshell))
+    allocate(istart(nshell), iend(nshell))
+    allocate(exponent_array(max_prim, nshell))
+    allocate(coeff_array(max_prim, nshell))
+
+    exponent_array(:, :) = 0.0_dp
+    coeff_array(:, :)    = 0.0_dp
+
+    do ishell=1, nshell
+      centers(ishell, :)      = aux%shell(ishell)%x0(:)
+      center_index(ishell)    = aux%shell(ishell)%icenter
+      am_shell(ishell)        = aux%shell(ishell)%am
+      nprimitive(ishell)      = aux%shell(ishell)%ng
+      istart(ishell)          = aux%shell(ishell)%istart
+      iend(ishell)            = aux%shell(ishell)%iend
+      do ig=1, aux%shell(ishell)%ng
+        exponent_array(ig, ishell) = aux%shell(ishell)%alpha(ig)
+        coeff_array(ig, ishell)    = aux%shell(ishell)%coeff(ig)
+      enddo
+    enddo
+
+    allocate(function_shell(nbf), function_local(nbf), function_center(nbf), function_am(nbf), function_order(nbf))
+    do ifunc=1, nbf
+      function_shell(ifunc) = aux%bff(ifunc)%shell_index
+      function_local(ifunc) = aux%bff(ifunc)%index_in_shell
+      function_center(ifunc)= aux%bff(ifunc)%icenter
+      function_am(ifunc)    = aux%bff(ifunc)%am
+      function_order(ifunc) = ifunc
+    enddo
+  endif
+
+#if !defined(HAVE_MPI)
+  if( .NOT. master ) return
 
   open(newunit=unit_aux, file='auxil_basis', form='unformatted', status='replace', action='write')
   write(unit_aux) nshell, max_prim, nbf
@@ -1056,8 +1093,104 @@ subroutine dump_auxil_basis_binary()
   write(unit_aux) function_am
   close(unit_aux)
 
-  deallocate(centers, center_index, am_shell, nprimitive, istart, iend, exponent_array, coeff_array)
-  deallocate(function_shell, function_local, function_center, function_am, function_order)
+#else
+
+  call MPI_FILE_OPEN(MPI_COMM_WORLD, 'auxil_basis', MPI_MODE_WRONLY + MPI_MODE_CREATE, MPI_INFO_NULL, wfile, ierr)
+
+  disp = 0_MPI_OFFSET_KIND
+  if( master ) then
+    call MPI_FILE_WRITE_AT(wfile, disp, nshell, 1, MPI_INTEGER, MPI_STATUS_IGNORE, ierr)
+  endif
+  disp = disp + STORAGE_SIZE(nshell)
+
+  if( master ) then
+    call MPI_FILE_WRITE_AT(wfile, disp, max_prim, 1, MPI_INTEGER, MPI_STATUS_IGNORE, ierr)
+  endif
+  disp = disp + STORAGE_SIZE(max_prim)
+
+  if( master ) then
+    call MPI_FILE_WRITE_AT(wfile, disp, nbf, 1, MPI_INTEGER, MPI_STATUS_IGNORE, ierr)
+  endif
+  disp = disp + STORAGE_SIZE(nbf)
+
+  if( master ) then
+    call MPI_FILE_WRITE_AT(wfile, disp, aux%gaussian_type, LEN(aux%gaussian_type), MPI_CHARACTER, MPI_STATUS_IGNORE, ierr)
+  endif
+  disp = disp + STORAGE_SIZE(aux%gaussian_type)
+
+  if( master ) then
+    call MPI_FILE_WRITE_AT(wfile, disp, centers, SIZE(centers), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, ierr)
+  endif
+  disp = disp + SIZE(centers) * STORAGE_SIZE(centers(1, 1))
+
+  if( master ) then
+    call MPI_FILE_WRITE_AT(wfile, disp, center_index, SIZE(center_index), MPI_INTEGER, MPI_STATUS_IGNORE, ierr)
+  endif
+  disp = disp + SIZE(center_index) * STORAGE_SIZE(center_index(1))
+
+  if( master ) then
+    call MPI_FILE_WRITE_AT(wfile, disp, am_shell, SIZE(am_shell), MPI_INTEGER, MPI_STATUS_IGNORE, ierr)
+  endif
+  disp = disp + SIZE(am_shell) * STORAGE_SIZE(am_shell(1))
+
+  if( master ) then
+    call MPI_FILE_WRITE_AT(wfile, disp, nprimitive, SIZE(nprimitive), MPI_INTEGER, MPI_STATUS_IGNORE, ierr)
+  endif
+  disp = disp + SIZE(nprimitive) * STORAGE_SIZE(nprimitive(1))
+
+  if( master ) then
+    call MPI_FILE_WRITE_AT(wfile, disp, exponent_array, SIZE(exponent_array), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, ierr)
+  endif
+  disp = disp + SIZE(exponent_array) * STORAGE_SIZE(exponent_array(1, 1))
+
+  if( master ) then
+    call MPI_FILE_WRITE_AT(wfile, disp, coeff_array, SIZE(coeff_array), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, ierr)
+  endif
+  disp = disp + SIZE(coeff_array) * STORAGE_SIZE(coeff_array(1, 1))
+
+  if( master ) then
+    call MPI_FILE_WRITE_AT(wfile, disp, istart, SIZE(istart), MPI_INTEGER, MPI_STATUS_IGNORE, ierr)
+  endif
+  disp = disp + SIZE(istart) * STORAGE_SIZE(istart(1))
+
+  if( master ) then
+    call MPI_FILE_WRITE_AT(wfile, disp, iend, SIZE(iend), MPI_INTEGER, MPI_STATUS_IGNORE, ierr)
+  endif
+  disp = disp + SIZE(iend) * STORAGE_SIZE(iend(1))
+
+  if( master ) then
+    call MPI_FILE_WRITE_AT(wfile, disp, function_order, SIZE(function_order), MPI_INTEGER, MPI_STATUS_IGNORE, ierr)
+  endif
+  disp = disp + SIZE(function_order) * STORAGE_SIZE(function_order(1))
+
+  if( master ) then
+    call MPI_FILE_WRITE_AT(wfile, disp, function_shell, SIZE(function_shell), MPI_INTEGER, MPI_STATUS_IGNORE, ierr)
+  endif
+  disp = disp + SIZE(function_shell) * STORAGE_SIZE(function_shell(1))
+
+  if( master ) then
+    call MPI_FILE_WRITE_AT(wfile, disp, function_local, SIZE(function_local), MPI_INTEGER, MPI_STATUS_IGNORE, ierr)
+  endif
+  disp = disp + SIZE(function_local) * STORAGE_SIZE(function_local(1))
+
+  if( master ) then
+    call MPI_FILE_WRITE_AT(wfile, disp, function_center, SIZE(function_center), MPI_INTEGER, MPI_STATUS_IGNORE, ierr)
+  endif
+  disp = disp + SIZE(function_center) * STORAGE_SIZE(function_center(1))
+
+  if( master ) then
+    call MPI_FILE_WRITE_AT(wfile, disp, function_am, SIZE(function_am), MPI_INTEGER, MPI_STATUS_IGNORE, ierr)
+  endif
+  disp = disp + SIZE(function_am) * STORAGE_SIZE(function_am(1))
+
+  call MPI_FILE_CLOSE(wfile, ierr)
+
+#endif
+
+  if( master ) then
+    deallocate(centers, center_index, am_shell, nprimitive, istart, iend, exponent_array, coeff_array)
+    deallocate(function_shell, function_local, function_center, function_am, function_order)
+  endif
 
 end subroutine dump_auxil_basis_binary
 
