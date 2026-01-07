@@ -472,8 +472,8 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
     if( has_auxil_basis) then
       call chi_to_sqrtvchisqrtv_auxil(desc_x, xpy_matrix, eigenvalue, wpol_out, en_gw)
       if( print_chi_ ) then
-        call dump_chi_hdf5(wpol_out)
-        call dump_auxil_basis_hdf5()
+        call dump_chi_binary(wpol_out)
+        call dump_auxil_basis_binary()
       endif
       ! This following coding of the Galitskii-Migdal correlation energy is only working with
       ! an auxiliary basis
@@ -940,22 +940,19 @@ end subroutine chi_to_sqrtvchisqrtv_auxil
 
 
 !=========================================================================
-subroutine dump_chi_hdf5(sf)
+subroutine dump_chi_binary(sf)
   implicit none
   type(spectral_function), intent(in) :: sf
-#if defined(HAVE_HDF5)
-  integer(HID_T)        :: fid
   real(dp), allocatable :: residue_all(:, :)
   real(dp), allocatable :: local_row(:)
   integer               :: ibf_auxil, owner_rank
-  character(len=*), parameter :: chi_filename = 'wpol_sqrtvchisqrtv'
+  integer               :: unit_chi
 
   if( .NOT. has_auxil_basis ) return
+  if( .NOT. is_iomaster ) return
 
   allocate(local_row(sf%npole_reso))
-  if( is_iomaster ) then
-    call clean_allocate('Chi residues (global)', residue_all, sf%nprodbasis_total, sf%npole_reso)
-  endif
+  call clean_allocate('Chi residues (global)', residue_all, sf%nprodbasis_total, sf%npole_reso)
 
   do ibf_auxil=1, sf%nprodbasis_total
     owner_rank = iproc_ibf_auxil(ibf_auxil)
@@ -964,44 +961,38 @@ subroutine dump_chi_hdf5(sf)
       local_row(:) = sf%residue_left(ibf_auxil_l(ibf_auxil), :)
     endif
     call auxil%bcast(owner_rank, local_row)
-    if( is_iomaster ) residue_all(ibf_auxil, :) = local_row(:)
+    residue_all(ibf_auxil, :) = local_row(:)
   enddo
 
-  if( is_iomaster ) then
-    call hdf_open_file(fid, chi_filename, status='NEW')
-    call hdf_write_dataset(fid, 'poles', sf%pole)
-    call hdf_write_dataset(fid, 'residue_left', residue_all)
-    call hdf_close_file(fid)
-    call clean_deallocate('Chi residues (global)', residue_all)
-  endif
+  open(newunit=unit_chi, file='wpol_sqrtvchisqrtv', form='unformatted', status='replace', action='write')
+  write(unit_chi) sf%npole_reso, sf%nprodbasis_total
+  write(unit_chi) sf%pole
+  write(unit_chi) residue_all
+  close(unit_chi)
 
+  call clean_deallocate('Chi residues (global)', residue_all)
   deallocate(local_row)
-#else
-  if( is_iomaster ) then
-    call issue_warning('dump_chi_hdf5: HDF5 support is required to print chi in HDF5 format')
-  endif
-#endif
 
-end subroutine dump_chi_hdf5
+end subroutine dump_chi_binary
 
 
 !=========================================================================
-subroutine dump_auxil_basis_hdf5()
+subroutine dump_auxil_basis_binary()
   implicit none
-#if defined(HAVE_HDF5)
   type(basis_set), pointer :: aux
-  integer(HID_T)           :: fid
   integer                  :: nshell, max_prim, ishell, ig, nbf, ifunc
   real(dp), allocatable    :: centers(:, :)
   real(dp), allocatable    :: exponent_array(:, :), coeff_array(:, :)
   integer, allocatable     :: center_index(:), am_shell(:), nprimitive(:), istart(:), iend(:)
   integer, allocatable     :: function_shell(:), function_local(:), function_center(:), function_am(:), function_order(:)
+  integer                  :: unit_aux
 
   if( .NOT. has_auxil_basis ) return
   if( .NOT. ASSOCIATED(auxil_basis_ptr) ) then
-    if( is_iomaster ) call issue_warning('dump_auxil_basis_hdf5: auxiliary basis not registered')
+    if( is_iomaster ) call issue_warning('dump_auxil_basis_binary: auxiliary basis not registered')
     return
   endif
+  if( .NOT. is_iomaster ) return
 
   aux => auxil_basis_ptr
   nshell = aux%nshell
@@ -1033,7 +1024,7 @@ subroutine dump_auxil_basis_hdf5()
 
   nbf = aux%nbf
   if( nbf <= 0 ) then
-    if( is_iomaster ) call issue_warning('dump_auxil_basis_hdf5: auxiliary basis has no functions to export')
+    if( is_iomaster ) call issue_warning('dump_auxil_basis_binary: auxiliary basis has no functions to export')
     deallocate(centers, center_index, am_shell, nprimitive, istart, iend, exponent_array, coeff_array)
     return
   endif
@@ -1047,30 +1038,28 @@ subroutine dump_auxil_basis_hdf5()
     function_order(ifunc) = ifunc
   enddo
 
-  call hdf_open_file(fid, 'auxil_basis', status='NEW')
-  call hdf_write_dataset(fid, 'gaussian_type', TRIM(aux%gaussian_type))
-  call hdf_write_dataset(fid, 'shell_centers', centers)
-  call hdf_write_dataset(fid, 'shell_center_index', center_index)
-  call hdf_write_dataset(fid, 'shell_angular_momentum', am_shell)
-  call hdf_write_dataset(fid, 'shell_nprimitive', nprimitive)
-  call hdf_write_dataset(fid, 'shell_exponents', exponent_array)
-  call hdf_write_dataset(fid, 'shell_coefficients', coeff_array)
-  call hdf_write_dataset(fid, 'shell_istart', istart)
-  call hdf_write_dataset(fid, 'shell_iend', iend)
-  call hdf_write_dataset(fid, 'function_order', function_order)
-  call hdf_write_dataset(fid, 'function_shell_index', function_shell)
-  call hdf_write_dataset(fid, 'function_local_index', function_local)
-  call hdf_write_dataset(fid, 'function_center_index', function_center)
-  call hdf_write_dataset(fid, 'function_angular_momentum', function_am)
-  call hdf_close_file(fid)
+  open(newunit=unit_aux, file='auxil_basis', form='unformatted', status='replace', action='write')
+  write(unit_aux) nshell, max_prim, nbf
+  write(unit_aux) aux%gaussian_type
+  write(unit_aux) centers
+  write(unit_aux) center_index
+  write(unit_aux) am_shell
+  write(unit_aux) nprimitive
+  write(unit_aux) exponent_array
+  write(unit_aux) coeff_array
+  write(unit_aux) istart
+  write(unit_aux) iend
+  write(unit_aux) function_order
+  write(unit_aux) function_shell
+  write(unit_aux) function_local
+  write(unit_aux) function_center
+  write(unit_aux) function_am
+  close(unit_aux)
 
   deallocate(centers, center_index, am_shell, nprimitive, istart, iend, exponent_array, coeff_array)
   deallocate(function_shell, function_local, function_center, function_am, function_order)
-#else
-  if( is_iomaster ) call issue_warning('dump_auxil_basis_hdf5: HDF5 support is required to print auxiliary basis information')
-#endif
 
-end subroutine dump_auxil_basis_hdf5
+end subroutine dump_auxil_basis_binary
 
 
 !=========================================================================
