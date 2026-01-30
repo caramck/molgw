@@ -318,6 +318,12 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
   ! for small problems.
   !
   eh_nelem = INT(nmat, kind=8) * INT(nmat, kind=8)
+  if( is_bse ) then
+    write(stdout, '(/,1x,a)') 'BSE electron-hole Hamiltonian dump check'
+    write(stdout, '(1x,a,i8)') '  nmat =', nmat
+    write(stdout, '(1x,a,i12)') '  nmat*nmat =', eh_nelem
+    write(stdout, '(1x,a,l1)') '  threshold (nmat*nmat < 30000): ', eh_nelem < 30000_8
+  endif
   if( is_bse .AND. eh_nelem < 30000_8 ) then
     allocate(amb_global(nmat, nmat))
     allocate(apb_global(nmat, nmat))
@@ -328,6 +334,7 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
     a_global(:, :) = 0.5_dp * ( apb_global(:, :) + amb_global(:, :) )
     b_global(:, :) = 0.5_dp * ( apb_global(:, :) - amb_global(:, :) )
     if( world%rank == 0 ) then
+      write(stdout, '(1x,a)') '  Writing electron-hole Hamiltonian to file: electron_hole_ham'
       open(newunit=eh_unit, file='electron_hole_ham', form='unformatted', access='stream')
       write(eh_unit) nmat
       write(eh_unit) is_tda
