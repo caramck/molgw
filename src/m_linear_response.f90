@@ -61,6 +61,10 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
   integer                   :: reading_status
   integer                   :: tdhffile
   integer                   :: m_apb, n_apb, m_x, n_x
+  integer                   :: eh_unit
+  integer(kind=8)           :: eh_nelem
+  real(dp), allocatable      :: amb_global(:, :), apb_global(:, :)
+  real(dp), allocatable      :: a_global(:, :), b_global(:, :)
   ! SCALAPACK variables
   integer                   :: desc_apb(NDEL), desc_x(NDEL)
   integer                   :: info
@@ -308,6 +312,30 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
 
     amb_matrix(:, :) = apb_matrix(:, :)
 
+  endif
+  !
+  ! Optionally dump the electron-hole Hamiltonian (A and B blocks)
+  ! for small problems.
+  !
+  eh_nelem = INT(nmat, kind=8) * INT(nmat, kind=8)
+  if( is_bse .AND. eh_nelem < 30000_8 ) then
+    allocate(amb_global(nmat, nmat))
+    allocate(apb_global(nmat, nmat))
+    call gather_distributed_copy(desc_apb, amb_matrix, amb_global)
+    call gather_distributed_copy(desc_apb, apb_matrix, apb_global)
+    allocate(a_global(nmat, nmat))
+    allocate(b_global(nmat, nmat))
+    a_global(:, :) = 0.5_dp * ( apb_global(:, :) + amb_global(:, :) )
+    b_global(:, :) = 0.5_dp * ( apb_global(:, :) - amb_global(:, :) )
+    if( world%rank == 0 ) then
+      open(newunit=eh_unit, file='electron_hole_ham', form='unformatted', access='stream')
+      write(eh_unit) nmat
+      write(eh_unit) is_tda
+      write(eh_unit) a_global
+      write(eh_unit) b_global
+      close(eh_unit)
+    endif
+    deallocate(a_global, b_global, amb_global, apb_global)
   endif
   ! Construction done!
   !if(has_auxil_basis) call destroy_eri_3center_eigen()
