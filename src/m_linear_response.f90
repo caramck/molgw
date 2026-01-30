@@ -321,10 +321,9 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
   if( is_bse ) then
     write(stdout, '(/,1x,a)') 'BSE electron-hole Hamiltonian dump check'
     write(stdout, '(1x,a,i8)') '  nmat =', nmat
-    write(stdout, '(1x,a,i12)') '  nmat*nmat =', eh_nelem
-    write(stdout, '(1x,a,l1)') '  threshold (nmat*nmat < 30000): ', eh_nelem < 30000_8
+    write(stdout, '(1x,a,l1)') '  threshold (nmat*nmat < 30000): ', nmat < 30000_8
   endif
-  if( is_bse .AND. eh_nelem < 30000_8 ) then
+  if( is_bse .AND. nmat < 30000_8 ) then
     allocate(amb_global(nmat, nmat))
     allocate(apb_global(nmat, nmat))
     call gather_distributed_copy(desc_apb, amb_matrix, amb_global)
