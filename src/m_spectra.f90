@@ -30,7 +30,8 @@ contains
 
 
 !=========================================================================
-subroutine optical_spectrum(is_triplet_currently, basis, occupation, c_matrix, chi, xpy_matrix, xmy_matrix, eigenvalue, xi_eigenvalue)
+subroutine optical_spectrum(is_triplet_currently, basis, occupation, c_matrix, chi, xpy_matrix, xmy_matrix, eigenvalue, xi_eigenvalue, &
+                            gap_eigenvalue, hartree_eigenvalue, w_exact_eigenvalue, w_screen_eigenvalue)
   implicit none
 
   logical, intent(in)                 :: is_triplet_currently
@@ -41,6 +42,8 @@ subroutine optical_spectrum(is_triplet_currently, basis, occupation, c_matrix, c
   real(dp), intent(in)                :: xmy_matrix(:, :)
   real(dp), intent(in)                :: eigenvalue(:)
   real(dp), intent(in)                :: xi_eigenvalue(:)
+  real(dp), intent(in), optional      :: gap_eigenvalue(:), hartree_eigenvalue(:)
+  real(dp), intent(in), optional      :: w_exact_eigenvalue(:), w_screen_eigenvalue(:)
   !=====
   integer                            :: nstate, m_x, n_x
   integer                            :: gt
@@ -159,6 +162,30 @@ subroutine optical_spectrum(is_triplet_currently, basis, occupation, c_matrix, c
         write(char6, '(i6)') iexc
         write(unit_yaml, '(12x,a6,a,1x,es18.8)') ADJUSTL(char6), ':', xi_eigenvalue(iexc) * Ha_eV
       enddo
+      if( is_tda .AND. PRESENT(gap_eigenvalue) .AND. PRESENT(hartree_eigenvalue) &
+          .AND. PRESENT(w_exact_eigenvalue) .AND. PRESENT(w_screen_eigenvalue) ) then
+        write(unit_yaml, '(8x,a)') 'tda decomposition, eV:'
+        write(unit_yaml, '(12x,a)') 'direct qp gap contribution:'
+        do iexc=1, nexc
+          write(char6, '(i6)') iexc
+          write(unit_yaml, '(16x,a6,a,1x,es18.8)') ADJUSTL(char6), ':', gap_eigenvalue(iexc) * Ha_eV
+        enddo
+        write(unit_yaml, '(12x,a)') 'hartree kernel contribution:'
+        do iexc=1, nexc
+          write(char6, '(i6)') iexc
+          write(unit_yaml, '(16x,a6,a,1x,es18.8)') ADJUSTL(char6), ':', hartree_eigenvalue(iexc) * Ha_eV
+        enddo
+        write(unit_yaml, '(12x,a)') 'w exact exchange contribution:'
+        do iexc=1, nexc
+          write(char6, '(i6)') iexc
+          write(unit_yaml, '(16x,a6,a,1x,es18.8)') ADJUSTL(char6), ':', w_exact_eigenvalue(iexc) * Ha_eV
+        enddo
+        write(unit_yaml, '(12x,a)') 'w screening contribution:'
+        do iexc=1, nexc
+          write(char6, '(i6)') iexc
+          write(unit_yaml, '(16x,a6,a,1x,es18.8)') ADJUSTL(char6), ':', w_screen_eigenvalue(iexc) * Ha_eV
+        enddo
+      endif
     endif
 
     write(unit_yaml, '(8x,a)') 'transition dipole vector:'

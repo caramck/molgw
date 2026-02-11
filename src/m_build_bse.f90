@@ -691,7 +691,8 @@ end subroutine build_amb_apb_bse
 
 !=========================================================================
 subroutine build_amb_apb_screened_exchange_auxil(alpha_local, lambda, desc_apb, wpol, wpol_static, m_apb, n_apb, &
-                                                 amb_matrix, apb_matrix, amb_block, apb_block)
+                                                 amb_matrix, apb_matrix, amb_block, apb_block, &
+                                                 apb_exact_matrix, amb_exact_matrix, apb_screen_matrix, amb_screen_matrix)
   implicit none
 
   real(dp), intent(in)                :: alpha_local, lambda
@@ -700,20 +701,25 @@ subroutine build_amb_apb_screened_exchange_auxil(alpha_local, lambda, desc_apb, 
   integer, intent(in)                 :: m_apb, n_apb
   real(dp), intent(inout)             :: amb_matrix(m_apb, n_apb), apb_matrix(m_apb, n_apb)
   real(dp), allocatable, intent(out)  :: amb_block(:,:), apb_block(:,:)
+  real(dp), intent(inout), optional   :: apb_exact_matrix(m_apb, n_apb), amb_exact_matrix(m_apb, n_apb)
+  real(dp), intent(inout), optional   :: apb_screen_matrix(m_apb, n_apb), amb_screen_matrix(m_apb, n_apb)
   !=====
-  logical              :: is_bse
+  logical              :: is_bse, decompose_terms
   integer              :: nmat
   integer              :: t_ia, t_jb, t_ia_global, t_jb_global
   integer              :: istate, astate, jstate, bstate
   integer              :: iaspin, jbspin
-  real(dp)             :: wtmp, wtmp2=0.0e0_dp
+  real(dp)             :: wtmp, wtmp2=0.0e0_dp, wtmp_screen, wtmp_exact
   integer              :: jstate_min, jstate_max
   integer              :: ipole, ibf_auxil, jbf_auxil, ibf_auxil_global, jbf_auxil_global
   real(dp), allocatable :: wp0(:, :, :, :), wp0_lr(:, :, :, :), w0_local(:)
+  real(dp), allocatable :: wp0_screen(:, :, :, :), wp0_exact(:, :, :, :), wp0_lr_exact(:, :, :, :)
   integer              :: iprow, ipcol, irank
   integer              :: m_apb_block, n_apb_block
   real(dp), allocatable :: amb_matrix_before(:, :)
   real(dp), allocatable :: apb_matrix_before(:, :)
+  real(dp), allocatable :: amb_block_exact(:, :), apb_block_exact(:, :)
+  real(dp), allocatable :: amb_block_screen(:, :), apb_block_screen(:, :)
 #if defined(HAVE_SCALAPACK)
   real(dp), allocatable :: vsqrt_chi_vsqrt_i(:), residue_i(:), wp0_i(:, :)
 #else
@@ -731,6 +737,15 @@ subroutine build_amb_apb_screened_exchange_auxil(alpha_local, lambda, desc_apb, 
   nmat = desc_apb(M_)
   ! Is it an exchange or a screened exchange calculation
   is_bse = ALLOCATED(wpol_static%chi) .OR. ALLOCATED(wpol_static%residue_left)
+  decompose_terms = PRESENT(apb_exact_matrix) .AND. PRESENT(amb_exact_matrix) &
+                    .AND. PRESENT(apb_screen_matrix) .AND. PRESENT(amb_screen_matrix)
+
+  if( decompose_terms ) then
+    apb_exact_matrix(:, :) = 0.0_dp
+    amb_exact_matrix(:, :) = 0.0_dp
+    apb_screen_matrix(:, :) = 0.0_dp
+    amb_screen_matrix(:, :) = 0.0_dp
+  endif
 
 
   !
@@ -746,6 +761,12 @@ subroutine build_amb_apb_screened_exchange_auxil(alpha_local, lambda, desc_apb, 
 
   call clean_allocate('Temporary array for W', wp0, 1, nauxil_local, ncore_W+1, nvirtual_W-1, jstate_min, jstate_max, 1, nspin)
   wp0(:, :, :, :) = 0.0_dp
+  if( decompose_terms ) then
+    call clean_allocate('Temporary array for W_screen', wp0_screen, 1, nauxil_local, ncore_W+1, nvirtual_W-1, jstate_min, jstate_max, 1, nspin)
+    wp0_screen(:, :, :, :) = 0.0_dp
+    call clean_allocate('Temporary array for W_exact', wp0_exact, 1, nauxil_local, ncore_W+1, nvirtual_W-1, jstate_min, jstate_max, 1, nspin)
+    wp0_exact(:, :, :, :) = 0.0_dp
+  endif
 
   if( ( beta_hybrid > 1.0e-6_dp ) &
      .AND. ( TRIM(postscf) == 'TD' .OR. TRIM(postscf) == 'CPKS' &
@@ -753,6 +774,11 @@ subroutine build_amb_apb_screened_exchange_auxil(alpha_local, lambda, desc_apb, 
     call clean_allocate('Temporary array for W_lr', wp0_lr, 1, nauxil_local_lr, ncore_W+1, nvirtual_W-1, &
                         jstate_min, jstate_max, 1, nspin)
     wp0_lr(:, :, :, :) = 0.0_dp
+    if( decompose_terms ) then
+      call clean_allocate('Temporary array for W_lr_exact', wp0_lr_exact, 1, nauxil_local_lr, ncore_W+1, nvirtual_W-1, &
+                          jstate_min, jstate_max, 1, nspin)
+      wp0_lr_exact(:, :, :, :) = 0.0_dp
+    endif
   endif
 
   if( is_bse ) then
@@ -782,12 +808,15 @@ subroutine build_amb_apb_screened_exchange_auxil(alpha_local, lambda, desc_apb, 
       endif
 
       !
-      ! The last index of wp0 only runs on occupied states (to save memory and CPU time)
-      ! Be careful not to forget it in the following
-      do jstate=jstate_min, jstate_max
-        wp0(:, ncore_W+1:nvirtual_W-1, jstate, iaspin) = lambda * MATMUL( vsqrt_chi_vsqrt(:, :), &
-                                                              eri_3center_eigen(:, ncore_W+1:nvirtual_W-1, jstate, iaspin) )
-      enddo
+          ! The last index of wp0 only runs on occupied states (to save memory and CPU time)
+          ! Be careful not to forget it in the following
+          do jstate=jstate_min, jstate_max
+            wp0(:, ncore_W+1:nvirtual_W-1, jstate, iaspin) = lambda * MATMUL( vsqrt_chi_vsqrt(:, :), &
+                                                                  eri_3center_eigen(:, ncore_W+1:nvirtual_W-1, jstate, iaspin) )
+            if( decompose_terms ) then
+              wp0_screen(:, ncore_W+1:nvirtual_W-1, jstate, iaspin) = wp0(:, ncore_W+1:nvirtual_W-1, jstate, iaspin)
+            endif
+          enddo
 
       deallocate(vsqrt_chi_vsqrt)
 
@@ -812,14 +841,17 @@ subroutine build_amb_apb_screened_exchange_auxil(alpha_local, lambda, desc_apb, 
           enddo
 
           do jstate=jstate_min, jstate_max
-            wp0_i(ncore_W+1:nvirtual_W-1, jstate) = MATMUL( w0_local(:) , &
-                                                            eri_3center_eigen(:, ncore_W+1:nvirtual_W-1, jstate, iaspin) )
+              wp0_i(ncore_W+1:nvirtual_W-1, jstate) = MATMUL( w0_local(:) , &
+                                                              eri_3center_eigen(:, ncore_W+1:nvirtual_W-1, jstate, iaspin) )
           enddo
           call auxil%sum(wp0_i)
 
           if( iproc_ibf_auxil(ibf_auxil_global) == auxil%rank ) then
-            wp0(ibf_auxil_l(ibf_auxil_global), :, :, iaspin) = lambda * wp0_i(:, :)
-          endif
+              wp0(ibf_auxil_l(ibf_auxil_global), :, :, iaspin) = lambda * wp0_i(:, :)
+              if( decompose_terms ) then
+                wp0_screen(ibf_auxil_l(ibf_auxil_global), :, :, iaspin) = wp0(ibf_auxil_l(ibf_auxil_global), :, :, iaspin)
+              endif
+            endif
 
         enddo
         deallocate(wp0_i)
@@ -854,9 +886,12 @@ subroutine build_amb_apb_screened_exchange_auxil(alpha_local, lambda, desc_apb, 
           enddo
           call auxil%sum(wp0_i)
 
-          if( iproc_ibf_auxil(ibf_auxil) == auxil%rank ) then
-            wp0(ibf_auxil_l(ibf_auxil), :, :, iaspin) = lambda * wp0_i(:, :)
-          endif
+            if( iproc_ibf_auxil(ibf_auxil) == auxil%rank ) then
+              wp0(ibf_auxil_l(ibf_auxil), :, :, iaspin) = lambda * wp0_i(:, :)
+              if( decompose_terms ) then
+                wp0_screen(ibf_auxil_l(ibf_auxil), :, :, iaspin) = wp0(ibf_auxil_l(ibf_auxil), :, :, iaspin)
+              endif
+            endif
 
         enddo
 
@@ -880,8 +915,16 @@ subroutine build_amb_apb_screened_exchange_auxil(alpha_local, lambda, desc_apb, 
         do jstate=jstate_min, jstate_max
           wp0(:, ncore_W+1:nvirtual_W-1, jstate, iaspin) = wp0(:, ncore_W+1:nvirtual_W-1, jstate, iaspin) &
                              + alpha_local * lambda *  eri_3center_eigen(:, ncore_W+1:nvirtual_W-1, jstate, iaspin)
+          if( decompose_terms ) then
+            wp0_exact(:, ncore_W+1:nvirtual_W-1, jstate, iaspin) = wp0_exact(:, ncore_W+1:nvirtual_W-1, jstate, iaspin) &
+                               + alpha_local * lambda *  eri_3center_eigen(:, ncore_W+1:nvirtual_W-1, jstate, iaspin)
+          endif
           wp0_lr(:, ncore_W+1:nvirtual_W-1, jstate, iaspin) = wp0_lr(:, ncore_W+1:nvirtual_W-1, jstate, iaspin) &
                              + beta_hybrid * lambda *  eri_3center_eigen_lr(:, ncore_W+1:nvirtual_W-1, jstate, iaspin)
+          if( decompose_terms ) then
+            wp0_lr_exact(:, ncore_W+1:nvirtual_W-1, jstate, iaspin) = wp0_lr_exact(:, ncore_W+1:nvirtual_W-1, jstate, iaspin) &
+                               + beta_hybrid * lambda *  eri_3center_eigen_lr(:, ncore_W+1:nvirtual_W-1, jstate, iaspin)
+          endif
         enddo
       enddo
 
@@ -891,6 +934,10 @@ subroutine build_amb_apb_screened_exchange_auxil(alpha_local, lambda, desc_apb, 
         do jstate=jstate_min, jstate_max
           wp0(:, ncore_W+1:nvirtual_W-1, jstate, iaspin) = wp0(:, ncore_W+1:nvirtual_W-1, jstate, iaspin) &
                              + alpha_local * lambda *  eri_3center_eigen(:, ncore_W+1:nvirtual_W-1, jstate, iaspin)
+          if( decompose_terms ) then
+            wp0_exact(:, ncore_W+1:nvirtual_W-1, jstate, iaspin) = wp0_exact(:, ncore_W+1:nvirtual_W-1, jstate, iaspin) &
+                               + alpha_local * lambda *  eri_3center_eigen(:, ncore_W+1:nvirtual_W-1, jstate, iaspin)
+          endif
         enddo
       enddo
 
@@ -914,6 +961,20 @@ subroutine build_amb_apb_screened_exchange_auxil(alpha_local, lambda, desc_apb, 
       allocate(apb_block(m_apb_block, n_apb_block))
       apb_block(:, :) = 0.0_dp
       amb_block(:, :) = 0.0_dp
+      if( decompose_terms ) then
+        if( ALLOCATED(amb_block_exact) ) deallocate(amb_block_exact)
+        if( ALLOCATED(apb_block_exact) ) deallocate(apb_block_exact)
+        if( ALLOCATED(amb_block_screen) ) deallocate(amb_block_screen)
+        if( ALLOCATED(apb_block_screen) ) deallocate(apb_block_screen)
+        allocate(amb_block_exact(m_apb_block, n_apb_block))
+        allocate(apb_block_exact(m_apb_block, n_apb_block))
+        allocate(amb_block_screen(m_apb_block, n_apb_block))
+        allocate(apb_block_screen(m_apb_block, n_apb_block))
+        amb_block_exact(:, :) = 0.0_dp
+        apb_block_exact(:, :) = 0.0_dp
+        amb_block_screen(:, :) = 0.0_dp
+        apb_block_screen(:, :) = 0.0_dp
+      endif
 
 
       ! Set up -W contributions to matrices (A+B) and (A-B)
@@ -943,20 +1004,58 @@ subroutine build_amb_apb_screened_exchange_auxil(alpha_local, lambda, desc_apb, 
           if( (beta_hybrid > 1.0e-6_dp) .AND. ( TRIM(postscf) == 'TD' .OR. TRIM(postscf) == 'CPKS' &
              .OR. TRIM(w_screening)=='TDDFT' ) ) then
             wtmp2 = DOT_PRODUCT( eri_3center_eigen_lr(:, astate, bstate, iaspin) , wp0_lr(:, istate, jstate, iaspin) )
+          else
+            wtmp2 = 0.0_dp
           endif
 
           apb_block(t_ia, t_jb) = -wtmp -wtmp2
           amb_block(t_ia, t_jb) = -wtmp -wtmp2
+          if( decompose_terms ) then
+            if( is_bse ) then
+              wtmp_screen = DOT_PRODUCT( eri_3center_eigen(:, astate, bstate, iaspin) , wp0_screen(:, istate, jstate, iaspin) )
+            else
+              wtmp_screen = 0.0_dp
+            endif
+            wtmp_exact = DOT_PRODUCT( eri_3center_eigen(:, astate, bstate, iaspin) , wp0_exact(:, istate, jstate, iaspin) )
+            if( (beta_hybrid > 1.0e-6_dp) .AND. ( TRIM(postscf) == 'TD' .OR. TRIM(postscf) == 'CPKS' &
+               .OR. TRIM(w_screening)=='TDDFT' ) ) then
+              wtmp_exact = wtmp_exact + DOT_PRODUCT( eri_3center_eigen_lr(:, astate, bstate, iaspin) , &
+                                                    wp0_lr_exact(:, istate, jstate, iaspin) )
+            endif
+            apb_block_screen(t_ia, t_jb) = -wtmp_screen
+            amb_block_screen(t_ia, t_jb) = -wtmp_screen
+            apb_block_exact(t_ia, t_jb) = -wtmp_exact
+            amb_block_exact(t_ia, t_jb) = -wtmp_exact
+          endif
 
 
           wtmp = DOT_PRODUCT( eri_3center_eigen(:, istate, bstate, iaspin) , wp0(:, astate, jstate, iaspin) )
           if( (beta_hybrid > 1.0e-6_dp) .AND. ( TRIM(postscf) == 'TD' .OR. TRIM(postscf) == 'CPKS' &
              .OR. TRIM(w_screening)=='TDDFT' ) ) then
             wtmp2 = DOT_PRODUCT( eri_3center_eigen_lr(:, istate, bstate, iaspin) , wp0_lr(:, astate, jstate, iaspin) )
+          else
+            wtmp2 = 0.0_dp
           endif
             
           apb_block(t_ia, t_jb) =  apb_block(t_ia, t_jb) - wtmp -wtmp2
           amb_block(t_ia, t_jb) =  amb_block(t_ia, t_jb) + wtmp +wtmp2
+          if( decompose_terms ) then
+            if( is_bse ) then
+              wtmp_screen = DOT_PRODUCT( eri_3center_eigen(:, istate, bstate, iaspin) , wp0_screen(:, astate, jstate, iaspin) )
+            else
+              wtmp_screen = 0.0_dp
+            endif
+            wtmp_exact = DOT_PRODUCT( eri_3center_eigen(:, istate, bstate, iaspin) , wp0_exact(:, astate, jstate, iaspin) )
+            if( (beta_hybrid > 1.0e-6_dp) .AND. ( TRIM(postscf) == 'TD' .OR. TRIM(postscf) == 'CPKS' &
+               .OR. TRIM(w_screening)=='TDDFT' ) ) then
+              wtmp_exact = wtmp_exact + DOT_PRODUCT( eri_3center_eigen_lr(:, istate, bstate, iaspin) , &
+                                                    wp0_lr_exact(:, astate, jstate, iaspin) )
+            endif
+            apb_block_screen(t_ia, t_jb) = apb_block_screen(t_ia, t_jb) - wtmp_screen
+            amb_block_screen(t_ia, t_jb) = amb_block_screen(t_ia, t_jb) + wtmp_screen
+            apb_block_exact(t_ia, t_jb) = apb_block_exact(t_ia, t_jb) - wtmp_exact
+            amb_block_exact(t_ia, t_jb) = amb_block_exact(t_ia, t_jb) + wtmp_exact
+          endif
 
 
         enddo
@@ -966,6 +1065,12 @@ subroutine build_amb_apb_screened_exchange_auxil(alpha_local, lambda, desc_apb, 
 
       call world%sum(amb_block)
       call world%sum(apb_block)
+      if( decompose_terms ) then
+        call world%sum(amb_block_exact)
+        call world%sum(apb_block_exact)
+        call world%sum(amb_block_screen)
+        call world%sum(apb_block_screen)
+      endif
 
       if( iprow == iprow_sd .AND. ipcol == ipcol_sd ) then
         ! Save matrices to temporary local before adding block
@@ -979,6 +1084,12 @@ subroutine build_amb_apb_screened_exchange_auxil(alpha_local, lambda, desc_apb, 
         ! Add blocks to matrices
         amb_matrix(:, :) = amb_matrix(:, :) + amb_block(:, :)
         apb_matrix(:, :) = apb_matrix(:, :) + apb_block(:, :)
+        if( decompose_terms ) then
+          amb_exact_matrix(:, :) = amb_exact_matrix(:, :) + amb_block_exact(:, :)
+          apb_exact_matrix(:, :) = apb_exact_matrix(:, :) + apb_block_exact(:, :)
+          amb_screen_matrix(:, :) = amb_screen_matrix(:, :) + amb_block_screen(:, :)
+          apb_screen_matrix(:, :) = apb_screen_matrix(:, :) + apb_block_screen(:, :)
+        endif
         
         deallocate(amb_matrix_before)
         deallocate(apb_matrix_before)
@@ -986,12 +1097,21 @@ subroutine build_amb_apb_screened_exchange_auxil(alpha_local, lambda, desc_apb, 
 
       deallocate(amb_block)
       deallocate(apb_block)
+      if( decompose_terms ) then
+        deallocate(amb_block_exact)
+        deallocate(apb_block_exact)
+        deallocate(amb_block_screen)
+        deallocate(apb_block_screen)
+      endif
 
     enddo
   enddo
 
   call clean_deallocate('Temporary array for W', wp0)
   if(allocated(wp0_lr)) call clean_deallocate('Temporary array for W_lr', wp0_lr)
+  if(allocated(wp0_screen)) call clean_deallocate('Temporary array for W_screen', wp0_screen)
+  if(allocated(wp0_exact)) call clean_deallocate('Temporary array for W_exact', wp0_exact)
+  if(allocated(wp0_lr_exact)) call clean_deallocate('Temporary array for W_lr_exact', wp0_lr_exact)
 
   call stop_clock(timing_build_bse)
 

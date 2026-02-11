@@ -50,12 +50,19 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
   real(dp), allocatable      :: amb_diag_rpa(:)
   real(dp), allocatable      :: amb_matrix(:, :), apb_matrix(:, :)
   real(dp), allocatable      :: amb_block(:,:), apb_block(:,:)
+  real(dp), allocatable      :: amb_gap_matrix(:, :), apb_gap_matrix(:, :)
+  real(dp), allocatable      :: amb_hartree_matrix(:, :), apb_hartree_matrix(:, :)
+  real(dp), allocatable      :: amb_w_exact_matrix(:, :), apb_w_exact_matrix(:, :)
+  real(dp), allocatable      :: amb_w_screen_matrix(:, :), apb_w_screen_matrix(:, :)
   real(dp), allocatable      :: xpy_matrix(:, :), xmy_matrix(:, :)
   real(dp), allocatable      :: eigenvalue(:)
   real(dp), allocatable      :: xi_eigenval(:)
+  real(dp), allocatable      :: gap_eigenval(:), hartree_eigenval(:)
+  real(dp), allocatable      :: w_exact_eigenval(:), w_screen_eigenval(:)
   real(dp), allocatable      :: energy_qp(:, :)
   logical                   :: is_tddft, is_rpa, long_range_true=.true.
   logical                   :: has_manual_tdhf
+  logical                   :: do_print_xi_tda_decomp
   integer                   :: reading_status
   integer                   :: tdhffile
   integer                   :: m_apb, n_apb, m_x, n_x
@@ -165,6 +172,7 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
   !if( enforce_rpa ) alpha_local = 0.0_dp
 
   is_rpa = .NOT.(is_tddft) .AND. .NOT.(is_bse) .AND. (ABS(alpha_local)<1.0e-5_dp)
+  do_print_xi_tda_decomp = print_xi_ .AND. is_tda .AND. has_auxil_basis
 
   call start_clock(timing_build_h2p)
   write(stdout, '(/,1x,a)') 'Summarize the linear response calculation:'
@@ -221,6 +229,24 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
   call clean_allocate('A+B', apb_matrix, m_apb,n_apb)
   call clean_allocate('A-B', amb_matrix, m_apb,n_apb)
   allocate(amb_diag_rpa(nmat))
+  if( do_print_xi_tda_decomp ) then
+    call clean_allocate('A+B gap component', apb_gap_matrix, m_apb, n_apb)
+    call clean_allocate('A-B gap component', amb_gap_matrix, m_apb, n_apb)
+    call clean_allocate('A+B hartree component', apb_hartree_matrix, m_apb, n_apb)
+    call clean_allocate('A-B hartree component', amb_hartree_matrix, m_apb, n_apb)
+    call clean_allocate('A+B W exact component', apb_w_exact_matrix, m_apb, n_apb)
+    call clean_allocate('A-B W exact component', amb_w_exact_matrix, m_apb, n_apb)
+    call clean_allocate('A+B W screening component', apb_w_screen_matrix, m_apb, n_apb)
+    call clean_allocate('A-B W screening component', amb_w_screen_matrix, m_apb, n_apb)
+    apb_gap_matrix(:, :) = 0.0_dp
+    amb_gap_matrix(:, :) = 0.0_dp
+    apb_hartree_matrix(:, :) = 0.0_dp
+    amb_hartree_matrix(:, :) = 0.0_dp
+    apb_w_exact_matrix(:, :) = 0.0_dp
+    amb_w_exact_matrix(:, :) = 0.0_dp
+    apb_w_screen_matrix(:, :) = 0.0_dp
+    amb_w_screen_matrix(:, :) = 0.0_dp
+  endif
 
 
   !
@@ -238,12 +264,20 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
     !
     ! Step 1
     call build_amb_apb_diag_auxil(nmat, nstate, energy_qp, wpol_out, m_apb, n_apb, amb_matrix, apb_matrix, amb_diag_rpa)
+    if( do_print_xi_tda_decomp ) then
+      apb_gap_matrix(:, :) = apb_matrix(:, :)
+      amb_gap_matrix(:, :) = amb_matrix(:, :)
+    endif
 
 #if defined(HAVE_SCALAPACK)
     call build_apb_hartree_auxil_scalapack(is_triplet_currently, lambda_, desc_apb, wpol_out, m_apb, n_apb, apb_matrix)
 #else
     call build_apb_hartree_auxil(is_triplet_currently, lambda_, desc_apb, wpol_out, m_apb, n_apb, apb_matrix)
 #endif
+    if( do_print_xi_tda_decomp ) then
+      apb_hartree_matrix(:, :) = apb_matrix(:, :) - apb_gap_matrix(:, :)
+      amb_hartree_matrix(:, :) = 0.0_dp
+    endif
 
     !
     ! Step 2
@@ -255,8 +289,15 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
     !
     ! Step 3
     if(alpha_local > 1.0e-6_dp) then
-      call build_amb_apb_screened_exchange_auxil(alpha_local, lambda_, desc_apb, wpol_out, wpol_static, &
-                                                 m_apb, n_apb, amb_matrix, apb_matrix, amb_block, apb_block)
+      if( do_print_xi_tda_decomp ) then
+        call build_amb_apb_screened_exchange_auxil(alpha_local, lambda_, desc_apb, wpol_out, wpol_static, &
+                                                   m_apb, n_apb, amb_matrix, apb_matrix, amb_block, apb_block, &
+                                                   apb_w_exact_matrix, amb_w_exact_matrix, &
+                                                   apb_w_screen_matrix, amb_w_screen_matrix)
+      else
+        call build_amb_apb_screened_exchange_auxil(alpha_local, lambda_, desc_apb, wpol_out, wpol_static, &
+                                                   m_apb, n_apb, amb_matrix, apb_matrix, amb_block, apb_block)
+      endif
     else
       write(stdout, '(a,f8.3)') ' Content of Exchange: ', alpha_local
     endif
@@ -305,6 +346,16 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
 
 
     amb_matrix(:, :) = apb_matrix(:, :)
+    if( do_print_xi_tda_decomp ) then
+      apb_gap_matrix(:, :) = 0.5_dp * ( apb_gap_matrix(:, :) + amb_gap_matrix(:, :) )
+      amb_gap_matrix(:, :) = apb_gap_matrix(:, :)
+      apb_hartree_matrix(:, :) = 0.5_dp * ( apb_hartree_matrix(:, :) + amb_hartree_matrix(:, :) )
+      amb_hartree_matrix(:, :) = apb_hartree_matrix(:, :)
+      apb_w_exact_matrix(:, :) = 0.5_dp * ( apb_w_exact_matrix(:, :) + amb_w_exact_matrix(:, :) )
+      amb_w_exact_matrix(:, :) = apb_w_exact_matrix(:, :)
+      apb_w_screen_matrix(:, :) = 0.5_dp * ( apb_w_screen_matrix(:, :) + amb_w_screen_matrix(:, :) )
+      amb_w_screen_matrix(:, :) = apb_w_screen_matrix(:, :)
+    endif
 
   endif
   ! Construction done!
@@ -327,6 +378,16 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
   if( PRESENT(a_matrix) .AND. PRESENT(b_matrix) .AND. .NOT. PRESENT(x_matrix) .AND. .NOT. PRESENT(y_matrix) ) then
     call clean_deallocate('A+B', apb_matrix)
     call clean_deallocate('A-B', amb_matrix)
+    if( do_print_xi_tda_decomp ) then
+      call clean_deallocate('A+B gap component', apb_gap_matrix)
+      call clean_deallocate('A-B gap component', amb_gap_matrix)
+      call clean_deallocate('A+B hartree component', apb_hartree_matrix)
+      call clean_deallocate('A-B hartree component', amb_hartree_matrix)
+      call clean_deallocate('A+B W exact component', apb_w_exact_matrix)
+      call clean_deallocate('A-B W exact component', amb_w_exact_matrix)
+      call clean_deallocate('A+B W screening component', apb_w_screen_matrix)
+      call clean_deallocate('A-B W screening component', amb_w_screen_matrix)
+    endif
     if(has_auxil_basis .AND. .NOT. PRESENT(lambda) .AND. .NOT. eri_3center_mo_available ) then
       call destroy_eri_3center_eigen(long_range=(beta_hybrid>1.0e-6_dp))
     endif
@@ -345,6 +406,16 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
 
   allocate(eigenvalue(nexc))
   allocate(xi_eigenval(nexc))
+  if( do_print_xi_tda_decomp ) then
+    allocate(gap_eigenval(nexc))
+    allocate(hartree_eigenval(nexc))
+    allocate(w_exact_eigenval(nexc))
+    allocate(w_screen_eigenval(nexc))
+    gap_eigenval(:) = 0.0_dp
+    hartree_eigenval(:) = 0.0_dp
+    w_exact_eigenval(:) = 0.0_dp
+    w_screen_eigenval(:) = 0.0_dp
+  endif
 
   ! Allocate (X+Y)
   ! Allocate (X-Y) only if actually needed
@@ -402,6 +473,12 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
     ! When no screened exchange or blocks not allocated, set xi_eigenval to zero
     xi_eigenval(:) = 0.0_dp
   endif
+  if( do_print_xi_tda_decomp ) then
+    call project_kernel_on_excitation(nexc, n_x, xpy_matrix, xmy_matrix, apb_gap_matrix, amb_gap_matrix, gap_eigenval)
+    call project_kernel_on_excitation(nexc, n_x, xpy_matrix, xmy_matrix, apb_hartree_matrix, amb_hartree_matrix, hartree_eigenval)
+    call project_kernel_on_excitation(nexc, n_x, xpy_matrix, xmy_matrix, apb_w_exact_matrix, amb_w_exact_matrix, w_exact_eigenval)
+    call project_kernel_on_excitation(nexc, n_x, xpy_matrix, xmy_matrix, apb_w_screen_matrix, amb_w_screen_matrix, w_screen_eigenval)
+  endif
 
   ! Deallocate the non-necessary matrices
   deallocate(amb_diag_rpa)
@@ -411,6 +488,16 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
   ! (A-B) may have been already deallocated earlier in the case of RPA
   ! Relax: this is indeed tolerated by clean_deallocate
   call clean_deallocate('A-B', amb_matrix)
+  if( do_print_xi_tda_decomp ) then
+    call clean_deallocate('A+B gap component', apb_gap_matrix)
+    call clean_deallocate('A-B gap component', amb_gap_matrix)
+    call clean_deallocate('A+B hartree component', apb_hartree_matrix)
+    call clean_deallocate('A-B hartree component', amb_hartree_matrix)
+    call clean_deallocate('A+B W exact component', apb_w_exact_matrix)
+    call clean_deallocate('A-B W exact component', amb_w_exact_matrix)
+    call clean_deallocate('A+B W screening component', apb_w_screen_matrix)
+    call clean_deallocate('A-B W screening component', amb_w_screen_matrix)
+  endif
 
   !
   ! Second part of the RPA correlation energy: sum over positive eigenvalues
@@ -430,7 +517,13 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
   ! and the dynamic dipole tensor
   !
   if( is_tdhf .OR. is_tddft .OR. is_bse ) then
-    call optical_spectrum(is_triplet_currently, basis, occupation, c_matrix, wpol_out, xpy_matrix, xmy_matrix, eigenvalue, xi_eigenval)
+    if( do_print_xi_tda_decomp ) then
+      call optical_spectrum(is_triplet_currently, basis, occupation, c_matrix, wpol_out, xpy_matrix, xmy_matrix, eigenvalue, xi_eigenval, &
+                            gap_eigenvalue=gap_eigenval, hartree_eigenvalue=hartree_eigenval, &
+                            w_exact_eigenvalue=w_exact_eigenval, w_screen_eigenvalue=w_screen_eigenval)
+    else
+      call optical_spectrum(is_triplet_currently, basis, occupation, c_matrix, wpol_out, xpy_matrix, xmy_matrix, eigenvalue, xi_eigenval)
+    endif
     select case(TRIM(lower(stopping)))
     case('spherical')
       call stopping_power(basis, c_matrix, wpol_out, xpy_matrix, eigenvalue)
@@ -441,6 +534,9 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
 
   ! Deallocate xi_eigenval array
   deallocate(xi_eigenval)
+  if( do_print_xi_tda_decomp ) then
+    deallocate(gap_eigenval, hartree_eigenval, w_exact_eigenval, w_screen_eigenval)
+  endif
 
   ! extract X and Y if requested
   if( PRESENT(x_matrix) ) then
@@ -931,6 +1027,37 @@ subroutine chi_to_sqrtvchisqrtv_auxil(desc_x, xpy_matrix, eigenvalue, wpol, ener
   call stop_clock(timing_vchiv)
 
 end subroutine chi_to_sqrtvchisqrtv_auxil
+
+
+!=========================================================================
+subroutine project_kernel_on_excitation(nexc, n_x, xpy_matrix, xmy_matrix, apb_kernel, amb_kernel, kernel_eigenval)
+  implicit none
+
+  integer, intent(in)       :: nexc, n_x
+  real(dp), intent(in)      :: xpy_matrix(:, :), xmy_matrix(:, :)
+  real(dp), intent(in)      :: apb_kernel(:, :), amb_kernel(:, :)
+  real(dp), intent(out)     :: kernel_eigenval(:)
+  !=====
+  integer                   :: t_ia, t_jb, t_kb, nrow
+  !=====
+
+  nrow = MIN(n_x, SIZE(apb_kernel, DIM=1), SIZE(apb_kernel, DIM=2), SIZE(amb_kernel, DIM=1), SIZE(amb_kernel, DIM=2))
+  kernel_eigenval(:) = 0.0_dp
+
+  do t_ia=1, nexc
+    do t_jb=1, nrow
+      do t_kb=1, nrow
+        kernel_eigenval(t_ia) = kernel_eigenval(t_ia) + &
+          0.5_dp * xpy_matrix(t_jb,t_ia) * apb_kernel(t_jb,t_kb) * xpy_matrix(t_kb,t_ia)
+        kernel_eigenval(t_ia) = kernel_eigenval(t_ia) + &
+          0.5_dp * xmy_matrix(t_jb,t_ia) * amb_kernel(t_jb,t_kb) * xmy_matrix(t_kb,t_ia)
+      enddo
+    enddo
+  enddo
+
+  call world%sum(kernel_eigenval)
+
+end subroutine project_kernel_on_excitation
 
 
 !=========================================================================
