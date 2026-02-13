@@ -65,7 +65,17 @@ subroutine diago_4blocks_chol(amb_matrix, apb_matrix, desc_apb, bigomega, xpy_ma
     call PDBSSOLVER1(postscf_diago_flavor, nmat, apb_matrix, 1, 1, desc_apb, amb_matrix, 1, 1, desc_apb,    &
                     bigomega, xpy_matrix, 1, 1, desc_x, xmy_matrix,               &
                     work, lwork, iwork, liwork, info)
-    if( info /= 0 ) call die('diago_4blocks_chol: SCALAPACK failed')
+    if( info /= 0 ) then
+      write(stdout, '(1x,a,i12)') 'diago_4blocks_chol: PDBSSOLVER1(workspace query) info = ', info
+      if( info == -2 ) then
+        write(stdout, '(1x,a)') 'Likely cause: Cholesky of (A+B) failed (matrix not positive definite).'
+      else if( info < 0 ) then
+        write(stdout, '(1x,a)') 'Likely cause: invalid ScaLAPACK argument/descriptor/grid/workspace.'
+      else
+        write(stdout, '(1x,a)') 'Likely cause: distributed eigensolver did not converge.'
+      endif
+      call die('diago_4blocks_chol: SCALAPACK failed')
+    endif
 
     lwork  = NINT(work(1))
     deallocate(work)
@@ -78,7 +88,17 @@ subroutine diago_4blocks_chol(amb_matrix, apb_matrix, desc_apb, bigomega, xpy_ma
     call PDBSSOLVER1(postscf_diago_flavor, nmat, apb_matrix, 1, 1, desc_apb, amb_matrix, 1, 1, desc_apb,    &
                     bigomega, xpy_matrix, 1, 1, desc_x, xmy_matrix,               &
                     work, lwork, iwork, liwork, info)
-    if( info /= 0 ) call die('diago_4blocks_chol: SCALAPACK failed')
+    if( info /= 0 ) then
+      write(stdout, '(1x,a,i12)') 'diago_4blocks_chol: PDBSSOLVER1(solve) info = ', info
+      if( info == -2 ) then
+        write(stdout, '(1x,a)') 'Likely cause: Cholesky of (A+B) failed (matrix not positive definite).'
+      else if( info < 0 ) then
+        write(stdout, '(1x,a)') 'Likely cause: invalid ScaLAPACK argument/descriptor/grid/workspace.'
+      else
+        write(stdout, '(1x,a)') 'Likely cause: distributed eigensolver did not converge.'
+      endif
+      call die('diago_4blocks_chol: SCALAPACK failed')
+    endif
 
     call clean_deallocate('Work array for SCALAPACK diago', work)
     deallocate(iwork)
