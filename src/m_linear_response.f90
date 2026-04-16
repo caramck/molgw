@@ -57,12 +57,14 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
   real(dp), allocatable      :: xpy_matrix(:, :), xmy_matrix(:, :)
   real(dp), allocatable      :: eigenvalue(:)
   real(dp), allocatable      :: xi_eigenval(:)
+  real(dp), allocatable      :: bare_eigenval(:)
   real(dp), allocatable      :: gap_eigenval(:), hartree_eigenval(:)
   real(dp), allocatable      :: w_exact_eigenval(:), w_screen_eigenval(:)
   real(dp), allocatable      :: energy_qp(:, :)
   logical                   :: is_tddft, is_rpa, long_range_true=.true.
   logical                   :: has_manual_tdhf
   logical                   :: do_print_xi_tda_decomp
+  logical                   :: do_print_bare_energy
   integer                   :: reading_status
   integer                   :: tdhffile
   integer                   :: m_apb, n_apb, m_x, n_x
@@ -70,7 +72,7 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
   integer                   :: desc_apb(NDEL), desc_x(NDEL)
   integer                   :: info
   logical                   :: is_triplet_currently
-  integer                   :: t_ia, t_jb, t_kb
+  integer                   :: t_ia, t_jb, t_kb, t_ia_global, t_jb_global
   !=====
 
   call start_clock(timing_pola)
@@ -173,6 +175,7 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
 
   is_rpa = .NOT.(is_tddft) .AND. .NOT.(is_bse) .AND. (ABS(alpha_local)<1.0e-5_dp)
   do_print_xi_tda_decomp = print_xi_ .AND. is_tda .AND. has_auxil_basis
+  do_print_bare_energy   = print_bare_energy_ .AND. is_tda
 
   call start_clock(timing_build_h2p)
   write(stdout, '(/,1x,a)') 'Summarize the linear response calculation:'
@@ -406,6 +409,7 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
 
   allocate(eigenvalue(nexc))
   allocate(xi_eigenval(nexc))
+  allocate(bare_eigenval(nexc))
   if( do_print_xi_tda_decomp ) then
     allocate(gap_eigenval(nexc))
     allocate(hartree_eigenval(nexc))
@@ -480,6 +484,24 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
     call project_kernel_on_excitation(nexc, n_x, xpy_matrix, xmy_matrix, apb_w_screen_matrix, amb_w_screen_matrix, w_screen_eigenval)
   endif
 
+  ! Compute bare QP energy difference contribution to each excitation energy
+  ! bare_n = sum_{ia} xpy(ia,n) * xmy(ia,n) * (eps_a - eps_i)
+  ! Uses the identity X^2 - Y^2 = (X+Y)(X-Y) element-wise
+  if( do_print_bare_energy ) then
+    bare_eigenval(:) = 0.0_dp
+    do t_jb = 1, n_x
+      t_jb_global = colindex_local_to_global('S', t_jb)
+      do t_ia = 1, m_x
+        t_ia_global = rowindex_local_to_global(iprow_sd, nprow_sd, t_ia)
+        bare_eigenval(t_jb_global) = bare_eigenval(t_jb_global) &
+          + xpy_matrix(t_ia, t_jb) * xmy_matrix(t_ia, t_jb) * amb_diag_rpa(t_ia_global)
+      enddo
+    enddo
+    call world%sum(bare_eigenval)
+  else
+    bare_eigenval(:) = 0.0_dp
+  endif
+
   ! Deallocate the non-necessary matrices
   deallocate(amb_diag_rpa)
   write(stdout, *) 'Deallocate (A+B) and possibly (A-B)'
@@ -520,9 +542,11 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
     if( do_print_xi_tda_decomp ) then
       call optical_spectrum(is_triplet_currently, basis, occupation, c_matrix, wpol_out, xpy_matrix, xmy_matrix, eigenvalue, xi_eigenval, &
                             gap_eigenvalue=gap_eigenval, hartree_eigenvalue=hartree_eigenval, &
-                            w_exact_eigenvalue=w_exact_eigenval, w_screen_eigenvalue=w_screen_eigenval)
+                            w_exact_eigenvalue=w_exact_eigenval, w_screen_eigenvalue=w_screen_eigenval, &
+                            bare_eigenvalue=bare_eigenval)
     else
-      call optical_spectrum(is_triplet_currently, basis, occupation, c_matrix, wpol_out, xpy_matrix, xmy_matrix, eigenvalue, xi_eigenval)
+      call optical_spectrum(is_triplet_currently, basis, occupation, c_matrix, wpol_out, xpy_matrix, xmy_matrix, eigenvalue, xi_eigenval, &
+                            bare_eigenvalue=bare_eigenval)
     endif
     select case(TRIM(lower(stopping)))
     case('spherical')
@@ -532,8 +556,9 @@ subroutine polarizability(enforce_rpa, calculate_w, basis, occupation, energy, c
     end select
   endif
 
-  ! Deallocate xi_eigenval array
+  ! Deallocate xi_eigenval and bare_eigenval arrays
   deallocate(xi_eigenval)
+  deallocate(bare_eigenval)
   if( do_print_xi_tda_decomp ) then
     deallocate(gap_eigenval, hartree_eigenval, w_exact_eigenval, w_screen_eigenval)
   endif

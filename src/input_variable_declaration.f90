@@ -80,6 +80,8 @@
  logical, protected :: print_hartree_
   character(len=3), protected :: print_xi
  logical, protected :: print_xi_
+  character(len=3), protected :: print_bare_energy
+ logical, protected :: print_bare_energy_
  character(len=3), protected :: print_multipole
  logical, protected :: print_multipole_
  character(len=3), protected :: print_pdos

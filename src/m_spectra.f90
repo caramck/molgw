@@ -31,7 +31,7 @@ contains
 
 !=========================================================================
 subroutine optical_spectrum(is_triplet_currently, basis, occupation, c_matrix, chi, xpy_matrix, xmy_matrix, eigenvalue, xi_eigenvalue, &
-                            gap_eigenvalue, hartree_eigenvalue, w_exact_eigenvalue, w_screen_eigenvalue)
+                            gap_eigenvalue, hartree_eigenvalue, w_exact_eigenvalue, w_screen_eigenvalue, bare_eigenvalue)
   implicit none
 
   logical, intent(in)                 :: is_triplet_currently
@@ -44,6 +44,7 @@ subroutine optical_spectrum(is_triplet_currently, basis, occupation, c_matrix, c
   real(dp), intent(in)                :: xi_eigenvalue(:)
   real(dp), intent(in), optional      :: gap_eigenvalue(:), hartree_eigenvalue(:)
   real(dp), intent(in), optional      :: w_exact_eigenvalue(:), w_screen_eigenvalue(:)
+  real(dp), intent(in), optional      :: bare_eigenvalue(:)
   !=====
   integer                            :: nstate, m_x, n_x
   integer                            :: gt
@@ -162,6 +163,15 @@ subroutine optical_spectrum(is_triplet_currently, basis, occupation, c_matrix, c
         write(char6, '(i6)') iexc
         write(unit_yaml, '(12x,a6,a,1x,es18.8)') ADJUSTL(char6), ':', xi_eigenvalue(iexc) * Ha_eV
       enddo
+    endif
+    if( print_bare_energy_ .AND. PRESENT(bare_eigenvalue) ) then
+      write(unit_yaml, '(8x,a)') 'bare energy contribution, eV:'
+      do iexc=1, nexc
+        write(char6, '(i6)') iexc
+        write(unit_yaml, '(12x,a6,a,1x,es18.8)') ADJUSTL(char6), ':', bare_eigenvalue(iexc) * Ha_eV
+      enddo
+    endif
+    if(print_xi_) then
       if( is_tda .AND. PRESENT(gap_eigenvalue) .AND. PRESENT(hartree_eigenvalue) &
           .AND. PRESENT(w_exact_eigenvalue) .AND. PRESENT(w_screen_eigenvalue) ) then
         write(unit_yaml, '(8x,a)') 'tda decomposition, eV:'

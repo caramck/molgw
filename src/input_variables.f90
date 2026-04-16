@@ -61,6 +61,7 @@
     print_eri,       &
     print_hartree,       &
     print_xi,            &
+    print_bare_energy,   &
     print_multipole,       &
     print_pdos,       &
     print_restart,       &
@@ -280,6 +281,7 @@
  print_eri = 'no'
  print_hartree = 'no'
  print_xi = 'no'
+ print_bare_energy = 'no'
  print_multipole = 'no'
  print_pdos = 'no'
  print_restart = 'yes'
