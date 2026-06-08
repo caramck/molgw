@@ -325,10 +325,10 @@ subroutine optical_spectrum(is_triplet_currently, basis, occupation, c_matrix, c
       do t_ia_global=1, chi%npole_reso
         istate = chi%transition_table(1, t_ia_global)
         astate = chi%transition_table(2, t_ia_global)
-        if( ABS(coeff(t_ia_global)) > 0.05_dp ) &
+        if( ABS(coeff(t_ia_global)) > 0.001_dp ) &
           write(unit_yaml, '(16x,a,i6,a,i6,a,es18.8,a,a,a)') '- [', istate, ', ', astate, ', ', &
                   coeff(t_ia_global), ', "', TRIM(symsymbol), '" ]'
-        if( ABS(coeff(chi%npole_reso+t_ia_global)) > 0.05_dp ) &
+        if( ABS(coeff(chi%npole_reso+t_ia_global)) > 0.001_dp ) &
           write(unit_yaml, '(16x,a,i6,a,i6,a,es18.8,a,a,a)') '- [', astate, ', ', istate, ', ', &
                   coeff(chi%npole_reso+t_ia_global), ', "', TRIM(symsymbol), '" ]'
       end do
