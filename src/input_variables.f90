@@ -67,6 +67,7 @@
     print_bigrestart,       &
     print_cc4s_files,       &
     print_cube,       &
+    print_transition_amplitude_thr,       &
     print_transition_density,       &
     print_wfn_files,       &
     print_all_mo_wfn_file,       &
@@ -318,6 +319,7 @@
  print_bigrestart = 'yes'
  print_cc4s_files = 'no'
  print_cube = 'no'
+ print_transition_amplitude_thr = 0.05_dp
  print_transition_density = 'no'
  print_wfn_files = 'no'
  print_all_mo_wfn_file = 'no'

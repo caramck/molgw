@@ -190,7 +190,8 @@
   write(stdout, '(1x,a32,6x,a)') 'print_spatial_extension', print_spatial_extension 
   write(stdout, '(1x,a32,6x,a)') 'print_tddft_matrices', print_tddft_matrices 
   write(stdout, '(1x,a32,6x,a)') 'print_tddft_restart', print_tddft_restart 
-  write(stdout, '(1x,a32,6x,a)') 'print_transition_density', print_transition_density 
+  write(stdout, '(1x,a32,2x,es16.8)') 'print_transition_amplitude_thr', print_transition_amplitude_thr
+  write(stdout, '(1x,a32,6x,a)') 'print_transition_density', print_transition_density
   write(stdout, '(1x,a32,6x,a)') 'print_transition_dipole', print_transition_dipole 
   write(stdout, '(1x,a32,6x,a)') 'print_w', print_w 
   write(stdout, '(1x,a32,6x,a)') 'print_wfn', print_wfn 

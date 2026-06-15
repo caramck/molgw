@@ -83,6 +83,7 @@
  logical, protected :: print_cc4s_files_
  character(len=3), protected :: print_cube
  logical, protected :: print_cube_
+ real(dp), protected :: print_transition_amplitude_thr
  character(len=3), protected :: print_transition_density
  logical, protected :: print_transition_density_
  character(len=3), protected :: print_wfn_files
